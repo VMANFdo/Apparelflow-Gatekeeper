@@ -134,7 +134,7 @@ export const verificationLogs = pgTable(
     attemptNo: integer('attempt_no').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
+  () => [
     sql`CONSTRAINT vl_rejection_note_check CHECK (
       decision != 'REJECTED' OR (rejection_note IS NOT NULL AND rejection_note != '')
     )`,
