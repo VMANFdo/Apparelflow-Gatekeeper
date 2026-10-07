@@ -183,7 +183,7 @@ git branch -d feat/database-schema
   ```
   ✅ Commit: `feat(auth): add jwt session utilities`
 
-- [ ] **T13: Auth routes**
+- [x] **T13: Auth routes**
   🌿 **Branch:** `feat/auth-session-api`
   ```text
   Follow SKILLS.md skill 3. Implement POST /api/auth/login, POST /api/auth/logout, GET /api/auth/me.
