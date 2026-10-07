@@ -163,7 +163,7 @@ git branch -d feat/database-schema
 
 ## Phase 1: Authentication, RBAC and role switcher (about 4h)
 
-- [ ] **T11: Errors and HTTP mapper**
+- [x] **T11: Errors and HTTP mapper**
   🌿 **Branch:** `feat/auth-session-api`
   ```text
   Follow SKILLS.md skill 4. Create src/domain/errors.ts with AppError subclasses: ValidationError(400), UnauthorizedError(401),
