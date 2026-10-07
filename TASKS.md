@@ -145,7 +145,7 @@ git branch -d feat/database-schema
   ✅ Check response headers in the browser Network tab. | Commit: `feat(ui): add security headers and design tokens`
   🔀 **Last task on this branch:** push, open PR "`feat: add db client, health route, security headers and design tokens`", self-review the diff, merge (merge commit, not squash), delete branch.
 
-- [ ] **T10: 🧑 Deploy to Vercel**
+- [x] **T10: 🧑 Deploy to Vercel**
   🌿 **Branch:** `chore/vercel-deployment`
   1. Vercel: Add New Project, import the repo.
   2. Environment Variables (Production **and** Preview): `DATABASE_URL`, `AUTH_SECRET`. Do **not** prefix with `NEXT_PUBLIC_`.
@@ -163,7 +163,7 @@ git branch -d feat/database-schema
 
 ## Phase 1: Authentication, RBAC and role switcher (about 4h)
 
-- [ ] **T11: Errors and HTTP mapper**
+- [x] **T11: Errors and HTTP mapper**
   🌿 **Branch:** `feat/auth-session-api`
   ```text
   Follow SKILLS.md skill 4. Create src/domain/errors.ts with AppError subclasses: ValidationError(400), UnauthorizedError(401),
@@ -173,7 +173,7 @@ git branch -d feat/database-schema
   ```
   ✅ Unit test the mapper quickly. | Commit: `feat(api): add typed errors and response mapper`
 
-- [ ] **T12: Session utilities**
+- [x] **T12: Session utilities**
   🌿 **Branch:** `feat/auth-session-api`
   ```text
   Follow SKILLS.md skill 3. Create src/server/auth/session.ts: signSession({sub, role}) and verifySession(token) using jose HS256
@@ -183,7 +183,7 @@ git branch -d feat/database-schema
   ```
   ✅ Commit: `feat(auth): add jwt session utilities`
 
-- [ ] **T13: Auth routes**
+- [x] **T13: Auth routes**
   🌿 **Branch:** `feat/auth-session-api`
   ```text
   Follow SKILLS.md skill 3. Implement POST /api/auth/login, POST /api/auth/logout, GET /api/auth/me.
@@ -193,7 +193,7 @@ git branch -d feat/database-schema
   ```
   ✅ Test wrong password 6 times via curl and confirm lockout. 📝 AI often leaks whether the email exists. | Commit: `feat(auth): add login, logout and me endpoints`
 
-- [ ] **T14: RBAC guard and Origin check**
+- [x] **T14: RBAC guard and Origin check**
   🌿 **Branch:** `feat/auth-session-api`
   ```text
   Follow SKILLS.md skill 4. Create requireUser() (401 if no valid session) and requireRole(...roles) (403 if wrong role)

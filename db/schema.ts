@@ -134,7 +134,7 @@ export const verificationLogs = pgTable(
     attemptNo: integer('attempt_no').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
+  () => [
     sql`CONSTRAINT vl_rejection_note_check CHECK (
       decision != 'REJECTED' OR (rejection_note IS NOT NULL AND rejection_note != '')
     )`,
@@ -142,6 +142,9 @@ export const verificationLogs = pgTable(
 )
 
 // ─── Type exports ─────────────────────────────────────────────────────────────
+
+export type Role = (typeof roleEnum.enumValues)[number]
+export type OrderStatus = (typeof orderStatusEnum.enumValues)[number]
 
 export type User = typeof users.$inferSelect
 export type Recipe = typeof recipes.$inferSelect

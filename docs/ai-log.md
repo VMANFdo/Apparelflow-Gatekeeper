@@ -19,7 +19,8 @@ _Add a row here each time you catch an AI mistake. Be specific: file name, what 
 
 | # | File | What AI did wrong | How it was fixed |
 |---|---|---|---|
-| 1 | _(TBD — fill in as mistakes are caught)_ | | |
+| 1 | `src/server/auth/session.ts` | Assumed the `@/*` tsconfig alias covered the repo-root `db/` folder and wrote `import { users } from '@/db/schema'` — resolution failed (`Cannot find module '@/db/schema'`) in `npm test`. | Added a dedicated `"@/db/*": ["./db/*"]` path in `tsconfig.json` and a matching `/^@\/db\//` alias in `vitest.config.ts`, so the whole team can import the schema by alias instead of fragile relative paths. |
+| 2 | `tests/session.test.ts` | Passed `{ alg: 'HS384' }` as the second argument to jose's `SignJWT.sign()` — `SignOptions` has no `alg` field, so `tsc --noEmit` failed. | Set the algorithm in the protected header only (`.setProtectedHeader({ alg: 'HS384' })`) and let jose derive the signing algorithm from it. |
 
 ---
 
@@ -40,3 +41,7 @@ _Intentional design decisions that defend against both bugs and AI mistakes._
 - **Partial unique index** `idx_one_approved_log_per_order` — database-level guarantee of one APPROVED log per order.
 - **Approve endpoint** uses `SELECT ... FOR UPDATE` inside a transaction and re-reads counts from DB — prevents race conditions and body-injection attacks.
 - **Server-side authority** — expected quantities, statuses, verifier IDs, and timestamps are always computed or sourced by the server, never trusted from the client.
+- **RBAC inside every handler** — `requireUser()` / `requireRole()` run inside `handle()` before any business logic; hiding controls in the UI is cosmetic only, and middleware/proxy is never the security boundary.
+- **Role is read from the DB, not the JWT** — `getCurrentUser()` re-loads the user row on every request, so a deactivated or demoted user loses access immediately even with a valid 8-hour token.
+- **Origin check on mutations** — `assertSameOrigin()` runs before the handler for POST/PUT/PATCH/DELETE: a present `Origin` must match the request host (403 otherwise), while header-less cURL/Postman requests are allowed by design.
+- **Login hardening** — one generic `Invalid email or password` for every failure, a dummy bcrypt compare when the email does not exist (no timing oracle), and a DB-persisted 5-failure / 15-minute lockout (no in-memory rate-limit state, which would not survive serverless cold starts).

@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
-import { db } from '../../../server/db'
+import { db } from '@/server/db'
 import { sql } from 'drizzle-orm'
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
