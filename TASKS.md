@@ -52,7 +52,7 @@ git branch -d feat/database-schema
 
 ## Phase 1: Foundation and schema (about 4h)
 
-- [ ] **T01: Scaffold the project**
+- [x] **T01: Scaffold the project**
   🌿 **Branch:** `chore/project-scaffold`
   ```text
   Follow SKILLS.md. Scaffold a Next.js (App Router) + TypeScript + Tailwind project in the current folder.
@@ -64,7 +64,7 @@ git branch -d feat/database-schema
   ✅ `npm run dev` starts. `.env.local` is git-ignored. | Commit: `chore: scaffold next.js project and tooling`
   🔀 **Last task on this branch:** push, open PR "`chore: scaffold project and tooling`", self-review the diff, merge (merge commit, not squash), delete branch.
 
-- [ ] **T02: 🧑 Create GitHub repo and Supabase project**
+- [x] **T02: 🧑 Create GitHub repo and Supabase project**
   🌿 **Branch:** none (manual setup on GitHub and Supabase). Do it after T01 is merged.
   1. Create a **public** GitHub repo, push the scaffold.
   2. Supabase: New project, choose the region nearest you, save the DB password.
@@ -73,7 +73,7 @@ git branch -d feat/database-schema
 
   ✅ `.env.local` has all 3 values and is not tracked by git.
 
-- [ ] **T03: Drizzle schema**
+- [x] **T03: Drizzle schema**
   🌿 **Branch:** `feat/database-schema`
   ```text
   Follow SKILLS.md skill 2. Create db/schema.ts with these tables: users, recipes, recipe_components,
@@ -85,7 +85,7 @@ git branch -d feat/database-schema
   ```
   ✅ `npm run db:generate` creates a migration without errors. | Commit: `feat(db): add relational schema`
 
-- [ ] **T04: Custom SQL migration (triggers and RLS)**
+- [x] **T04: Custom SQL migration (triggers and RLS)**
   🌿 **Branch:** `feat/database-schema`
   ```text
   Follow SKILLS.md skill 2. Create a custom Drizzle migration containing: (1) trigger blocking UPDATE/DELETE on
@@ -96,14 +96,14 @@ git branch -d feat/database-schema
   ```
   ✅ Read the SQL yourself. Triggers must raise exceptions, not silently ignore. | Commit: `feat(db): add immutability triggers and RLS`
 
-- [ ] **T05: Run the migration on Supabase**
+- [x] **T05: Run the migration on Supabase**
   🌿 **Branch:** `feat/database-schema`
   🧑 Run `npm run db:migrate`. In the Supabase dashboard confirm all 6 tables exist and RLS shows as **enabled** on each.
 
   ✅ Tables visible, RLS on. | Commit: `chore(db): apply initial migration`
   🔀 **Last task on this branch:** push, open PR "`feat(db): add relational schema, triggers and RLS`", self-review the diff, merge (merge commit, not squash), delete branch.
 
-- [ ] **T06: Start the AI log**
+- [x] **T06: Start the AI log**
   🌿 **Branch:** `docs/ai-usage-log`
   Create `docs/ai-log.md` with 4 headings: Tools & Prompting, Flawed AI Code, Human Refactoring, Defensive Architecture. Add one line per AI mistake you catch from now on. 📝
 
@@ -112,7 +112,7 @@ git branch -d feat/database-schema
 
 ## Phase 2: Seed data and deployed skeleton (about 3.5h)
 
-- [ ] **T07: Seed script**
+- [x] **T07: Seed script**
   🌿 **Branch:** `feat/seed-data`
   ```text
   Follow SKILLS.md skill 2. Write db/seed.ts (idempotent, safe to re-run). Seed 3 users with bcrypt-hashed passwords:
@@ -125,7 +125,7 @@ git branch -d feat/database-schema
   ✅ `npm run db:seed` twice produces no duplicates. Password hashes are bcrypt, not plain text. | Commit: `feat(db): seed users and recipes`
   🔀 **Last task on this branch:** push, open PR "`feat(db): seed demo users and recipes`", self-review the diff, merge (merge commit, not squash), delete branch.
 
-- [ ] **T08: Skeleton page and health route**
+- [x] **T08: Skeleton page and health route**
   🌿 **Branch:** `feat/app-skeleton-security-headers`
   ```text
   Follow SKILLS.md skill 12. Create src/server/db/index.ts using postgres() with prepare:false and max:1.
@@ -134,7 +134,7 @@ git branch -d feat/database-schema
   ```
   ✅ Local page shows both recipes. | Commit: `feat: add db client, health route and skeleton page`
 
-- [ ] **T09: Security headers and design tokens**
+- [x] **T09: Security headers and design tokens**
   🌿 **Branch:** `feat/app-skeleton-security-headers`
   ```text
   Follow SKILLS.md skills 10 and 12. In next.config add security headers: Content-Security-Policy (self + needed inline for Next),
