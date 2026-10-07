@@ -173,7 +173,7 @@ git branch -d feat/database-schema
   ```
   ✅ Unit test the mapper quickly. | Commit: `feat(api): add typed errors and response mapper`
 
-- [ ] **T12: Session utilities**
+- [x] **T12: Session utilities**
   🌿 **Branch:** `feat/auth-session-api`
   ```text
   Follow SKILLS.md skill 3. Create src/server/auth/session.ts: signSession({sub, role}) and verifySession(token) using jose HS256

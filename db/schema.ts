@@ -143,6 +143,9 @@ export const verificationLogs = pgTable(
 
 // ─── Type exports ─────────────────────────────────────────────────────────────
 
+export type Role = (typeof roleEnum.enumValues)[number]
+export type OrderStatus = (typeof orderStatusEnum.enumValues)[number]
+
 export type User = typeof users.$inferSelect
 export type Recipe = typeof recipes.$inferSelect
 export type RecipeComponent = typeof recipeComponents.$inferSelect
