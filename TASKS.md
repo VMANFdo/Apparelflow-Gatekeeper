@@ -203,7 +203,7 @@ git branch -d feat/database-schema
   ✅ Commit: `feat(auth): add requireRole guard and origin check`
   🔀 **Last task on this branch:** push, open PR "`feat(auth): add session auth, RBAC guard and typed errors`", self-review the diff, merge (merge commit, not squash), delete branch.
 
-- [ ] **T15: Login page with demo credentials panel**
+- [x] **T15: Login page with demo credentials panel**
   🌿 **Branch:** `feat/login-page-app-shell`
   ```text
   Follow SKILLS.md skills 9 and 10. Build /login: a clean centered card with email and password inputs (inline errors),
