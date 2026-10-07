@@ -41,3 +41,7 @@ _Intentional design decisions that defend against both bugs and AI mistakes._
 - **Partial unique index** `idx_one_approved_log_per_order` — database-level guarantee of one APPROVED log per order.
 - **Approve endpoint** uses `SELECT ... FOR UPDATE` inside a transaction and re-reads counts from DB — prevents race conditions and body-injection attacks.
 - **Server-side authority** — expected quantities, statuses, verifier IDs, and timestamps are always computed or sourced by the server, never trusted from the client.
+- **RBAC inside every handler** — `requireUser()` / `requireRole()` run inside `handle()` before any business logic; hiding controls in the UI is cosmetic only, and middleware/proxy is never the security boundary.
+- **Role is read from the DB, not the JWT** — `getCurrentUser()` re-loads the user row on every request, so a deactivated or demoted user loses access immediately even with a valid 8-hour token.
+- **Origin check on mutations** — `assertSameOrigin()` runs before the handler for POST/PUT/PATCH/DELETE: a present `Origin` must match the request host (403 otherwise), while header-less cURL/Postman requests are allowed by design.
+- **Login hardening** — one generic `Invalid email or password` for every failure, a dummy bcrypt compare when the email does not exist (no timing oracle), and a DB-persisted 5-failure / 15-minute lockout (no in-memory rate-limit state, which would not survive serverless cold starts).

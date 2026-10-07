@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { ZodError } from 'zod'
 import { AppError } from '@/domain/errors'
+import { assertSameOrigin } from '@/server/auth/guard'
 
 type Handler = () => Response | Promise<Response>
 
@@ -31,6 +32,7 @@ export function errorResponse(error: unknown): NextResponse {
 
 export async function handle(request: Request, fn: Handler): Promise<Response> {
   try {
+    assertSameOrigin(request)
     return await fn()
   } catch (error) {
     return errorResponse(error)

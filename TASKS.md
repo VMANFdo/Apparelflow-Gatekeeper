@@ -193,7 +193,7 @@ git branch -d feat/database-schema
   ```
   ✅ Test wrong password 6 times via curl and confirm lockout. 📝 AI often leaks whether the email exists. | Commit: `feat(auth): add login, logout and me endpoints`
 
-- [ ] **T14: RBAC guard and Origin check**
+- [x] **T14: RBAC guard and Origin check**
   🌿 **Branch:** `feat/auth-session-api`
   ```text
   Follow SKILLS.md skill 4. Create requireUser() (401 if no valid session) and requireRole(...roles) (403 if wrong role)
