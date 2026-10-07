@@ -145,7 +145,7 @@ git branch -d feat/database-schema
   ✅ Check response headers in the browser Network tab. | Commit: `feat(ui): add security headers and design tokens`
   🔀 **Last task on this branch:** push, open PR "`feat: add db client, health route, security headers and design tokens`", self-review the diff, merge (merge commit, not squash), delete branch.
 
-- [ ] **T10: 🧑 Deploy to Vercel**
+- [x] **T10: 🧑 Deploy to Vercel**
   🌿 **Branch:** `chore/vercel-deployment`
   1. Vercel: Add New Project, import the repo.
   2. Environment Variables (Production **and** Preview): `DATABASE_URL`, `AUTH_SECRET`. Do **not** prefix with `NEXT_PUBLIC_`.
