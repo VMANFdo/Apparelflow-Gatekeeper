@@ -1,5 +1,5 @@
 import { db } from '@/server/db'
-import { recipes, recipeComponents } from '../../../db/schema'
+import { recipes, recipeComponents } from '../../db/schema'
 import { eq, sql } from 'drizzle-orm'
 
 export default async function HomePage() {
