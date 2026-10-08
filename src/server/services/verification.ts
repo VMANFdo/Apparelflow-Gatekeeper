@@ -1,11 +1,18 @@
 import { eq } from 'drizzle-orm'
-import { cuttingOrders, verificationItems, type OrderStatus } from '@/db/schema'
-import { ConflictError, NotFoundError, ValidationError } from '@/domain/errors'
+import { cuttingOrders, verificationItems, verificationLogs, type OrderStatus } from '@/db/schema'
+import { BusinessRuleError, ConflictError, NotFoundError, ValidationError } from '@/domain/errors'
+import { computeWastagePct } from '@/domain/wastage'
+import { assertTransition } from '@/domain/stateMachine'
 import {
+  buildVarianceSnapshot,
+  canApprove,
   evaluateComponent,
+  listBlockingItems,
   toDbStatus,
+  type ApproveOrderInput,
   type SaveCountsInput,
 } from '@/domain/verification'
+import type { SessionUser } from '@/server/auth/session'
 import type { Db } from '@/server/db'
 
 type Tx = Parameters<Parameters<Db['transaction']>[0]>[0]
@@ -105,5 +112,83 @@ export async function saveCounts(db: Db, orderId: string, input: SaveCountsInput
     }
 
     return { items: items.map(toItemState) }
+  })
+}
+
+async function nextAttemptNo(db: DbLike, orderId: string): Promise<number> {
+  const logs = await db
+    .select({ id: verificationLogs.id })
+    .from(verificationLogs)
+    .where(eq(verificationLogs.orderId, orderId))
+  return logs.length + 1
+}
+
+export function blockingDetails(items: VerificationItemRow[]): string[] {
+  const byComponentId = new Map(items.map((item) => [item.componentId, item]))
+  return listBlockingItems(items).map((blocking) => {
+    const item = blocking.componentId ? byComponentId.get(blocking.componentId) : undefined
+    const expected = item ? item.expectedQty : '?'
+    const actual = item && item.actualQty !== null ? String(item.actualQty) : 'not counted'
+    const name = blocking.componentName ?? 'Unknown component'
+    return `${name}: ${blocking.verdict} (expected ${expected}, actual ${actual})`
+  })
+}
+
+export async function approveOrder(
+  db: Db,
+  actor: SessionUser,
+  orderId: string,
+  input: ApproveOrderInput
+) {
+  return db.transaction(async (tx) => {
+    const order = await lockOrder(tx, orderId)
+    assertTransition(order.status, 'VERIFIED')
+
+    const items = await loadItems(tx, orderId)
+    if (!canApprove(items)) {
+      throw new BusinessRuleError(
+        'Order cannot be approved while components are RED or uncounted',
+        blockingDetails(items)
+      )
+    }
+
+    const wastagePct = computeWastagePct(
+      Number(order.expectedFabricYds),
+      Number(order.actualFabricYds)
+    )
+    const snapshot = buildVarianceSnapshot(items, wastagePct)
+    const attemptNo = await nextAttemptNo(tx, orderId)
+    const approvalNote = input.approval_note?.trim() ? input.approval_note.trim() : null
+
+    const [log] = await tx
+      .insert(verificationLogs)
+      .values({
+        orderId: order.id,
+        verifierId: actor.id,
+        decision: 'APPROVED',
+        rejectionNote: null,
+        approvalNote,
+        wastagePct: wastagePct.toFixed(2),
+        varianceSnapshot: snapshot,
+        attemptNo,
+        createdAt: new Date(),
+      })
+      .returning({ id: verificationLogs.id })
+    if (!log) throw new Error('Failed to insert verification log')
+
+    const [updated] = await tx
+      .update(cuttingOrders)
+      .set({ status: 'VERIFIED', updatedAt: new Date() })
+      .where(eq(cuttingOrders.id, order.id))
+      .returning()
+    if (!updated) throw new Error('Failed to update order')
+
+    return {
+      order: { id: updated.id, orderNo: updated.orderNo, status: updated.status },
+      wastagePct,
+      attemptNo,
+      approvalNote,
+      logId: log.id,
+    }
   })
 }

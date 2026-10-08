@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { saveCountsSchema } from '@/domain/verification'
+import { approveOrderSchema, saveCountsSchema } from '@/domain/verification'
 
 const componentId = '11111111-1111-4111-8111-111111111111'
 const otherComponentId = '22222222-2222-4222-8222-222222222222'
@@ -84,5 +84,35 @@ describe('saveCountsSchema', () => {
 
   it('rejects a missing counts array', () => {
     expect(() => saveCountsSchema.parse({})).toThrow()
+  })
+})
+
+describe('approveOrderSchema', () => {
+  it('accepts an empty body', () => {
+    expect(approveOrderSchema.parse({})).toEqual({})
+  })
+
+  it('accepts a note and trims it', () => {
+    const parsed = approveOrderSchema.parse({ approval_note: '  All counts verified.  ' })
+    expect(parsed.approval_note).toBe('All counts verified.')
+  })
+
+  it('accepts a blank note as an empty value', () => {
+    const parsed = approveOrderSchema.parse({ approval_note: '   ' })
+    expect(parsed.approval_note).toBe('')
+  })
+
+  it('strips unknown fields instead of rejecting them', () => {
+    const parsed = approveOrderSchema.parse({ approval_note: 'Fine', status: 'VERIFIED' })
+    expect(parsed).toEqual({ approval_note: 'Fine' })
+    expect(parsed).not.toHaveProperty('status')
+  })
+
+  it('rejects a note longer than 500 characters', () => {
+    expect(() => approveOrderSchema.parse({ approval_note: 'x'.repeat(501) })).toThrow()
+  })
+
+  it('rejects a note sent as a number', () => {
+    expect(() => approveOrderSchema.parse({ approval_note: 42 })).toThrow()
   })
 })

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { OrderStatus } from '@/db/schema'
 import { ConflictError } from '@/domain/errors'
 import {
+  buildVarianceSnapshot,
   canApprove,
   evaluateComponent,
   listBlockingItems,
@@ -193,5 +194,70 @@ describe('computeWastagePct', () => {
   it('returns 0 for non-finite input', () => {
     expect(computeWastagePct(Number.NaN, 10)).toBe(0)
     expect(computeWastagePct(10, Number.POSITIVE_INFINITY)).toBe(0)
+  })
+})
+
+describe('buildVarianceSnapshot', () => {
+  it('captures one row per component with its delta and status', () => {
+    const items = [
+      { componentName: 'Front Body Panel', expectedQty: 50, actualQty: 50 },
+      { componentName: 'Back Body Panel', expectedQty: 50, actualQty: 47 },
+      { componentName: 'Sleeve Cuffs', expectedQty: 100, actualQty: 104 },
+    ]
+    expect(buildVarianceSnapshot(items, 2.78)).toEqual({
+      wastagePct: 2.78,
+      components: [
+        {
+          componentName: 'Front Body Panel',
+          expectedQty: 50,
+          actualQty: 50,
+          delta: 0,
+          status: 'GREEN',
+        },
+        {
+          componentName: 'Back Body Panel',
+          expectedQty: 50,
+          actualQty: 47,
+          delta: -3,
+          status: 'RED',
+        },
+        {
+          componentName: 'Sleeve Cuffs',
+          expectedQty: 100,
+          actualQty: 104,
+          delta: 4,
+          status: 'YELLOW',
+        },
+      ],
+    })
+  })
+
+  it('records uncounted components with a null delta and status', () => {
+    const snapshot = buildVarianceSnapshot(
+      [{ componentName: 'Collar & Stand', expectedQty: 30, actualQty: null }],
+      0
+    )
+    expect(snapshot.components[0]).toEqual({
+      componentName: 'Collar & Stand',
+      expectedQty: 30,
+      actualQty: null,
+      delta: null,
+      status: null,
+    })
+  })
+
+  it('keeps the same shape as the seeded demo logs', () => {
+    const snapshot = buildVarianceSnapshot(
+      [{ componentName: 'Hem Elastic Casing', expectedQty: 40, actualQty: 36 }],
+      3.64
+    )
+    expect(Object.keys(snapshot).sort()).toEqual(['components', 'wastagePct'])
+    expect(Object.keys(snapshot.components[0] ?? {}).sort()).toEqual([
+      'actualQty',
+      'componentName',
+      'delta',
+      'expectedQty',
+      'status',
+    ])
   })
 })

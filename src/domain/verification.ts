@@ -43,6 +43,35 @@ export function toDbStatus(verdict: ComponentVerdict): 'GREEN' | 'YELLOW' | 'RED
   return verdict === 'UNCOUNTED' ? null : verdict
 }
 
+export interface VarianceComponent {
+  componentName: string | null
+  expectedQty: number
+  actualQty: number | null
+  delta: number | null
+  status: 'GREEN' | 'YELLOW' | 'RED' | null
+}
+
+export interface VarianceSnapshot {
+  wastagePct: number
+  components: VarianceComponent[]
+}
+
+export function buildVarianceSnapshot(
+  items: VerifiableItem[],
+  wastagePct: number
+): VarianceSnapshot {
+  return {
+    wastagePct,
+    components: items.map((item) => ({
+      componentName: item.componentName ?? null,
+      expectedQty: item.expectedQty,
+      actualQty: item.actualQty,
+      delta: item.actualQty === null ? null : item.actualQty - item.expectedQty,
+      status: toDbStatus(evaluateComponent(item.expectedQty, item.actualQty)),
+    })),
+  }
+}
+
 // ─── Input schemas ────────────────────────────────────────────────────────────
 
 export const countEntrySchema = z.object({
@@ -75,3 +104,13 @@ export const saveCountsSchema = z
   })
 
 export type SaveCountsInput = z.infer<typeof saveCountsSchema>
+
+export const approveOrderSchema = z.object({
+  approval_note: z
+    .string({ message: 'approval_note must be a string' })
+    .trim()
+    .max(500, 'approval_note must be at most 500 characters')
+    .optional(),
+})
+
+export type ApproveOrderInput = z.infer<typeof approveOrderSchema>
