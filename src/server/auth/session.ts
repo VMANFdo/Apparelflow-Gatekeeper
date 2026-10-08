@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
+import { cache } from 'react'
 import { eq } from 'drizzle-orm'
 import { roleEnum, users, type Role, type User } from '@/db/schema'
 
@@ -58,7 +59,7 @@ export async function clearSessionCookie(): Promise<void> {
   cookieStore.set(SESSION_COOKIE, '', cookieOptions(0))
 }
 
-export async function getCurrentUser(): Promise<SessionUser | null> {
+export const getCurrentUser = cache(async function getCurrentUser(): Promise<SessionUser | null> {
   const cookieStore = await cookies()
   const token = cookieStore.get(SESSION_COOKIE)?.value
   const session = await verifySession(token)
@@ -75,4 +76,4 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
     fullName: user.fullName,
     isActive: user.isActive,
   }
-}
+})

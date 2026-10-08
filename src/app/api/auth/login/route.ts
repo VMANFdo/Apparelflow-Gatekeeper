@@ -48,10 +48,12 @@ export async function POST(request: NextRequest) {
       throw new UnauthorizedError(INVALID_CREDENTIALS)
     }
 
-    await db
-      .update(users)
-      .set({ failedAttempts: 0, lockedUntil: null })
-      .where(eq(users.id, user.id))
+    if (user.failedAttempts !== 0 || user.lockedUntil !== null) {
+      await db
+        .update(users)
+        .set({ failedAttempts: 0, lockedUntil: null })
+        .where(eq(users.id, user.id))
+    }
 
     const token = await signSession({ sub: user.id, role: user.role })
     await setSessionCookie(token)
