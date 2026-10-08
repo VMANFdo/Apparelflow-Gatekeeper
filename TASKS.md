@@ -256,7 +256,7 @@ git branch -d feat/database-schema
   ```
   ✅ Try -5, 2.5, empty, abc: all rejected with inline errors. | Commit: `feat(ui): add create order modal with live preview`
 
-- [ ] **T20: Supervisor order list and resubmit**
+- [x] **T20: Supervisor order list and resubmit**
   🌿 **Branch:** `feat/supervisor-orders-ui`
   ```text
   Follow SKILLS.md skills 6 and 10. Build /supervisor/orders: table (cards on mobile) with order_no, recipe, qty, roll ID, status badge,
