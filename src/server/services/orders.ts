@@ -7,7 +7,7 @@ import {
   verificationLogs,
   type OrderStatus,
 } from '@/db/schema'
-import { NotFoundError, BusinessRuleError } from '@/domain/errors'
+import { ConflictError, NotFoundError, BusinessRuleError } from '@/domain/errors'
 import {
   computeExpectedFabric,
   computeExpectedPieces,
@@ -124,7 +124,9 @@ export async function listOrders(db: Db, actor: SessionUser): Promise<OrderListI
     expectedFabricYds: Number(order.expectedFabricYds),
     createdAt: order.createdAt,
     rejectionNote:
-      order.logs.find((log) => log.decision === 'REJECTED')?.rejectionNote ?? null,
+      order.status === 'REJECTED'
+        ? (order.logs.find((log) => log.decision === 'REJECTED')?.rejectionNote ?? null)
+        : null,
     createdByName: order.createdByUser?.fullName ?? null,
     recipe: {
       id: order.recipe.id,
@@ -174,4 +176,32 @@ export async function listRecipes(db: Db): Promise<RecipeListItem[]> {
       imageUrl: component.imageUrl,
     })),
   }))
+}
+
+export async function resubmitOrder(db: Db, orderId: string) {
+  return db.transaction(async (tx) => {
+    const [order] = await tx
+      .select()
+      .from(cuttingOrders)
+      .where(eq(cuttingOrders.id, orderId))
+      .for('update')
+    if (!order) throw new NotFoundError('Order not found')
+    if (order.status !== 'REJECTED') {
+      throw new ConflictError('Only rejected orders can be resubmitted')
+    }
+
+    await tx
+      .update(verificationItems)
+      .set({ actualQty: null, status: null })
+      .where(eq(verificationItems.orderId, orderId))
+
+    const [updated] = await tx
+      .update(cuttingOrders)
+      .set({ status: 'PENDING_VERIFICATION', updatedAt: new Date() })
+      .where(eq(cuttingOrders.id, orderId))
+      .returning()
+    if (!updated) throw new Error('Failed to resubmit order')
+
+    return updated
+  })
 }

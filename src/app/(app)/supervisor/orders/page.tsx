@@ -1,11 +1,12 @@
 import { CreateOrderDialog } from '@/components/orders/create-order-dialog'
+import { OrdersTable } from '@/components/orders/orders-table'
 import { requireRolePage } from '@/server/auth/page-guard'
 import { db } from '@/server/db'
-import { listRecipes } from '@/server/services/orders'
+import { listOrders, listRecipes } from '@/server/services/orders'
 
 export default async function SupervisorOrdersPage() {
-  await requireRolePage('cutting_supervisor')
-  const recipes = await listRecipes(db)
+  const actor = await requireRolePage('cutting_supervisor')
+  const [recipes, orders] = await Promise.all([listRecipes(db), listOrders(db, actor)])
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
@@ -18,6 +19,8 @@ export default async function SupervisorOrdersPage() {
         </div>
         <CreateOrderDialog recipes={recipes} />
       </div>
+
+      <OrdersTable orders={orders} />
     </div>
   )
 }

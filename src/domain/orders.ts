@@ -1,4 +1,17 @@
 import { z } from 'zod'
+import type { OrderStatus } from '@/db/schema'
+
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  PENDING_VERIFICATION: 'Pending verification',
+  REJECTED: 'Rejected',
+  VERIFIED: 'Verified',
+}
+
+export const ORDER_STATUS_BADGE_CLASSES: Record<OrderStatus, string> = {
+  PENDING_VERIFICATION: 'border-amber-300 bg-amber-100 text-amber-900',
+  REJECTED: 'border-red-300 bg-red-100 text-red-900',
+  VERIFIED: 'border-emerald-300 bg-emerald-100 text-emerald-900',
+}
 
 export function round2(value: number): number {
   return Math.round(value * 100) / 100
