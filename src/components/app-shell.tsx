@@ -7,8 +7,9 @@ import Image from 'next/image'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import type { LucideIcon } from 'lucide-react'
 import { ChevronDown, ClipboardCheck, LogOut, Menu, Scissors, Shirt, X } from 'lucide-react'
-import { ROLE_BADGE_CLASSES, ROLE_HOME, ROLE_LABELS } from '@/domain/roles'
+import { ROLE_HOME, ROLE_LABELS } from '@/domain/roles'
 import type { Role } from '@/db/schema'
+import { useToast } from '@/components/ui/toast'
 
 type NavItem = { href: string; label: string; icon: LucideIcon }
 
@@ -75,6 +76,7 @@ function SidebarContent({
 export function AppShell({ user, children }: AppShellProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const toast = useToast()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
@@ -88,7 +90,8 @@ export function AppShell({ user, children }: AppShellProps) {
 
   async function signOut() {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' })
+      const response = await fetch('/api/auth/logout', { method: 'POST' })
+      if (response.ok) toast('Signed out successfully', 'success')
     } catch {
       // still continue to the login page; the cookie is httpOnly and short-lived
     }
@@ -129,12 +132,9 @@ export function AppShell({ user, children }: AppShellProps) {
           </button>
 
           <div className="text-left">
-            <div className="text-sm font-medium text-slate-900">{user.fullName}</div>
-            <span
-              className={`inline-block rounded-full border px-2 py-0.5 text-xs font-medium ${ROLE_BADGE_CLASSES[user.role]}`}
-            >
-              {ROLE_LABELS[user.role]}
-            </span>
+            <div className="rounded-md border border-blue-700 bg-blue-600 px-2.5 py-1 text-sm font-medium text-white">
+              Welcome Back {ROLE_LABELS[user.role]}!
+            </div>
           </div>
 
           <div className="ml-auto flex items-center gap-4">
@@ -142,7 +142,7 @@ export function AppShell({ user, children }: AppShellProps) {
               <DropdownMenu.Trigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 hover:border-amber-600 hover:bg-gradient-to-r hover:from-yellow-300 hover:to-amber-400 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
                 >
                   Switch role
                   <ChevronDown className="h-4 w-4" aria-hidden="true" />
@@ -171,7 +171,7 @@ export function AppShell({ user, children }: AppShellProps) {
               type="button"
               onClick={() => void signOut()}
               aria-label="Log out"
-              className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 hover:border-red-700 hover:bg-gradient-to-r hover:from-red-600 hover:to-rose-500 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
             >
               <LogOut className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">Log out</span>

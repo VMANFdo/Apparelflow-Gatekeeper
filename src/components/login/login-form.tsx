@@ -6,6 +6,7 @@ import { ClipboardCheck, Loader2, LogIn, Scissors, Shirt } from 'lucide-react'
 import { loginSchema } from '@/domain/auth'
 import { ROLE_HOME, ROLE_LABELS } from '@/domain/roles'
 import type { Role } from '@/db/schema'
+import { useToast } from '@/components/ui/toast'
 
 const DEMO_ACCOUNTS: { role: Role; email: string; password: string; icon: typeof Scissors }[] = [
   { role: 'cutting_supervisor', email: 'supervisor@apparelflow.demo', password: 'Supervisor@123', icon: Scissors },
@@ -15,6 +16,7 @@ const DEMO_ACCOUNTS: { role: Role; email: string; password: string; icon: typeof
 
 export function LoginForm() {
   const router = useRouter()
+  const toast = useToast()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [emailError, setEmailError] = useState<string | null>(null)
@@ -50,6 +52,7 @@ export function LoginForm() {
         return
       }
 
+      toast('Signed in successfully', 'success')
       router.push(ROLE_HOME[body.user.role as Role])
     } catch {
       setFormError('Could not reach the server. Check your connection and try again.')
