@@ -246,7 +246,7 @@ git branch -d feat/database-schema
   ✅ curl as verifier returns 403. Try sending `expected_qty` in the body and confirm it is ignored. | Commit: `feat(api): add order creation with server-side multiplier`
   🔀 **Last task on this branch:** push, open PR "`feat(api): add order creation with server-side multiplier`", self-review the diff, merge (merge commit, not squash), delete branch.
 
-- [ ] **T19: Create-order modal with live preview**
+- [x] **T19: Create-order modal with live preview**
   🌿 **Branch:** `feat/supervisor-orders-ui`
   ```text
   Follow SKILLS.md skills 9 and 10. Build a 'Create cutting order' modal (shadcn Dialog): recipe select, target quantity,
