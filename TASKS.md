@@ -285,7 +285,7 @@ git branch -d feat/database-schema
   ✅ Commit: `feat(domain): add traffic light, state machine and wastage logic`
   🔀 **Last task on this branch:** push, open PR "`feat(domain): add traffic light, state machine and wastage rules`", self-review the diff, merge (merge commit, not squash), delete branch.
 
-- [ ] **T22: Save counts endpoint**
+- [x] **T22: Save counts endpoint**
   🌿 **Branch:** `feat/verification-gatekeeper-api`
   ```text
   Follow SKILLS.md skill 7. PUT /api/verification/:orderId/counts (verifier only): body {counts:[{component_id, actual_qty}]}.
@@ -294,7 +294,7 @@ git branch -d feat/database-schema
   ```
   ✅ Send `status: 'GREEN'` in the body and confirm it is ignored. | Commit: `feat(api): add verifier count saving`
 
-- [ ] **T23: Approve endpoint (the hard stop)**
+- [x] **T23: Approve endpoint (the hard stop)**
   🌿 **Branch:** `feat/verification-gatekeeper-api`
   ```text
   Follow SKILLS.md skill 7 exactly. POST /api/verification/:orderId/approve (verifier only), optional approval_note.
