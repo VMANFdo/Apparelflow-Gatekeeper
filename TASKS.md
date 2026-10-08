@@ -305,7 +305,7 @@ git branch -d feat/database-schema
   ```
   ✅ curl approve on a shortage order returns **422**. curl as supervisor returns **403**. Double approve returns **409**. 📝 | Commit: `feat(api): add server-enforced approve hard stop`
 
-- [ ] **T24: Reject endpoint**
+- [x] **T24: Reject endpoint**
   🌿 **Branch:** `feat/verification-gatekeeper-api`
   ```text
   Follow SKILLS.md skill 7. POST /api/verification/:orderId/reject (verifier only): Zod requires note trimmed, 5..500 chars

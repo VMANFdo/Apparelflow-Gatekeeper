@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { approveOrderSchema, saveCountsSchema } from '@/domain/verification'
+import { approveOrderSchema, rejectOrderSchema, saveCountsSchema } from '@/domain/verification'
 
 const componentId = '11111111-1111-4111-8111-111111111111'
 const otherComponentId = '22222222-2222-4222-8222-222222222222'
@@ -114,5 +114,42 @@ describe('approveOrderSchema', () => {
 
   it('rejects a note sent as a number', () => {
     expect(() => approveOrderSchema.parse({ approval_note: 42 })).toThrow()
+  })
+})
+
+describe('rejectOrderSchema', () => {
+  it('requires a note', () => {
+    expect(() => rejectOrderSchema.parse({})).toThrow()
+  })
+
+  it('rejects a note shorter than 5 characters after trimming', () => {
+    expect(() => rejectOrderSchema.parse({ note: 'bad' })).toThrow()
+    expect(() => rejectOrderSchema.parse({ note: '    ' })).toThrow()
+    expect(() => rejectOrderSchema.parse({ note: 'ab  ' })).toThrow()
+  })
+
+  it('accepts a note of exactly 5 characters', () => {
+    expect(rejectOrderSchema.parse({ note: 'short' })).toEqual({ note: 'short' })
+  })
+
+  it('trims the note before validating the length', () => {
+    expect(rejectOrderSchema.parse({ note: '  Fabric rolled before cutting.  ' })).toEqual({
+      note: 'Fabric rolled before cutting.',
+    })
+  })
+
+  it('accepts a note of exactly 500 characters and rejects 501', () => {
+    expect(rejectOrderSchema.parse({ note: 'x'.repeat(500) }).note).toHaveLength(500)
+    expect(() => rejectOrderSchema.parse({ note: 'x'.repeat(501) })).toThrow()
+  })
+
+  it('strips unknown fields instead of rejecting them', () => {
+    const parsed = rejectOrderSchema.parse({ note: 'Roll damaged near the edge.', status: 'REJECTED' })
+    expect(parsed).toEqual({ note: 'Roll damaged near the edge.' })
+    expect(parsed).not.toHaveProperty('status')
+  })
+
+  it('rejects a note sent as a number', () => {
+    expect(() => rejectOrderSchema.parse({ note: 42 })).toThrow()
   })
 })

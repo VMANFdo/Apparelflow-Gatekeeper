@@ -10,6 +10,7 @@ import {
   listBlockingItems,
   toDbStatus,
   type ApproveOrderInput,
+  type RejectOrderInput,
   type SaveCountsInput,
 } from '@/domain/verification'
 import type { SessionUser } from '@/server/auth/session'
@@ -188,6 +189,58 @@ export async function approveOrder(
       wastagePct,
       attemptNo,
       approvalNote,
+      logId: log.id,
+    }
+  })
+}
+
+export async function rejectOrder(
+  db: Db,
+  actor: SessionUser,
+  orderId: string,
+  input: RejectOrderInput
+) {
+  return db.transaction(async (tx) => {
+    const order = await lockOrder(tx, orderId)
+    assertTransition(order.status, 'REJECTED')
+
+    const items = await loadItems(tx, orderId)
+    const wastagePct = computeWastagePct(
+      Number(order.expectedFabricYds),
+      Number(order.actualFabricYds)
+    )
+    const snapshot = buildVarianceSnapshot(items, wastagePct)
+    const attemptNo = await nextAttemptNo(tx, orderId)
+    const note = input.note.trim()
+
+    const [log] = await tx
+      .insert(verificationLogs)
+      .values({
+        orderId: order.id,
+        verifierId: actor.id,
+        decision: 'REJECTED',
+        rejectionNote: note,
+        approvalNote: null,
+        wastagePct: wastagePct.toFixed(2),
+        varianceSnapshot: snapshot,
+        attemptNo,
+        createdAt: new Date(),
+      })
+      .returning({ id: verificationLogs.id })
+    if (!log) throw new Error('Failed to insert verification log')
+
+    const [updated] = await tx
+      .update(cuttingOrders)
+      .set({ status: 'REJECTED', updatedAt: new Date() })
+      .where(eq(cuttingOrders.id, order.id))
+      .returning()
+    if (!updated) throw new Error('Failed to update order')
+
+    return {
+      order: { id: updated.id, orderNo: updated.orderNo, status: updated.status },
+      wastagePct,
+      attemptNo,
+      rejectionNote: note,
       logId: log.id,
     }
   })
