@@ -7,6 +7,8 @@ import {
   evaluateComponent,
   listBlockingItems,
   toDbStatus,
+  VERDICT_BADGE_CLASSES,
+  VERDICT_LABELS,
 } from '@/domain/verification'
 import { assertTransition, canTransition, STATE_TRANSITIONS } from '@/domain/stateMachine'
 import { computeWastagePct } from '@/domain/wastage'
@@ -47,6 +49,21 @@ describe('evaluateComponent', () => {
 
   it('returns RED when pieces were expected but none were found', () => {
     expect(evaluateComponent(5, 0)).toBe('RED')
+  })
+})
+
+describe('verdict presentation', () => {
+  it('maps every verdict to a human label', () => {
+    expect(VERDICT_LABELS.GREEN).toBe('Match')
+    expect(VERDICT_LABELS.YELLOW).toBe('Surplus')
+    expect(VERDICT_LABELS.RED).toBe('Shortage')
+    expect(VERDICT_LABELS.UNCOUNTED).toBe('Not counted')
+  })
+
+  it('provides a badge class for every verdict', () => {
+    for (const verdict of ['GREEN', 'YELLOW', 'RED', 'UNCOUNTED'] as const) {
+      expect(VERDICT_BADGE_CLASSES[verdict]).toContain('border-')
+    }
   })
 })
 

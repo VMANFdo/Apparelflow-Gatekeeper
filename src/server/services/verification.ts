@@ -293,3 +293,75 @@ export async function countPendingOrders(db: Db): Promise<number> {
     .where(eq(cuttingOrders.status, 'PENDING_VERIFICATION'))
   return row?.value ?? 0
 }
+
+export interface VerificationContext {
+  order: {
+    id: string
+    orderNo: string
+    status: OrderStatus
+    targetQty: number
+    fabricRollId: string
+    actualFabricYds: number
+    expectedFabricYds: number
+    createdAt: Date
+    createdByName: string | null
+  }
+  recipe: {
+    id: string
+    recipeCode: string
+    name: string
+    stdFabricYards: number
+    wastageCap: number
+  }
+  items: VerificationItemState[]
+}
+
+export async function getVerificationContext(
+  db: Db,
+  orderId: string
+): Promise<VerificationContext | null> {
+  const order = await db.query.cuttingOrders.findFirst({
+    where: eq(cuttingOrders.id, orderId),
+    columns: {
+      id: true,
+      orderNo: true,
+      status: true,
+      targetQty: true,
+      fabricRollId: true,
+      actualFabricYds: true,
+      expectedFabricYds: true,
+      createdAt: true,
+    },
+    with: {
+      recipe: {
+        columns: { id: true, recipeCode: true, name: true, stdFabricYards: true, wastageCap: true },
+      },
+      createdByUser: { columns: { fullName: true } },
+    },
+  })
+  if (!order) return null
+
+  const items = await loadItems(db, order.id)
+
+  return {
+    order: {
+      id: order.id,
+      orderNo: order.orderNo,
+      status: order.status,
+      targetQty: order.targetQty,
+      fabricRollId: order.fabricRollId,
+      actualFabricYds: Number(order.actualFabricYds),
+      expectedFabricYds: Number(order.expectedFabricYds),
+      createdAt: order.createdAt,
+      createdByName: order.createdByUser?.fullName ?? null,
+    },
+    recipe: {
+      id: order.recipe.id,
+      recipeCode: order.recipe.recipeCode,
+      name: order.recipe.name,
+      stdFabricYards: Number(order.recipe.stdFabricYards),
+      wastageCap: Number(order.recipe.wastageCap),
+    },
+    items: items.map(toItemState),
+  }
+}

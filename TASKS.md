@@ -325,7 +325,7 @@ git branch -d feat/database-schema
   ```
   ✅ Commit: `feat(ui): add verifier queue`
 
-- [ ] **T26: Verification terminal with traffic lights**
+- [x] **T26: Verification terminal with traffic lights**
   🌿 **Branch:** `feat/verifier-terminal-ui`
   ```text
   Follow SKILLS.md skills 5, 9, 10. Build /verifier/[orderId]: a table with one row per component showing name, expected, an actual

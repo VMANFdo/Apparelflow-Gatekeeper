@@ -43,6 +43,20 @@ export function toDbStatus(verdict: ComponentVerdict): 'GREEN' | 'YELLOW' | 'RED
   return verdict === 'UNCOUNTED' ? null : verdict
 }
 
+export const VERDICT_LABELS: Record<ComponentVerdict, string> = {
+  GREEN: 'Match',
+  YELLOW: 'Surplus',
+  RED: 'Shortage',
+  UNCOUNTED: 'Not counted',
+}
+
+export const VERDICT_BADGE_CLASSES: Record<ComponentVerdict, string> = {
+  GREEN: 'border-emerald-300 bg-emerald-100 text-emerald-900',
+  YELLOW: 'border-amber-300 bg-amber-100 text-amber-900',
+  RED: 'border-red-300 bg-red-100 text-red-900',
+  UNCOUNTED: 'border-slate-300 bg-slate-100 text-slate-700',
+}
+
 export interface VarianceComponent {
   componentName: string | null
   expectedQty: number
