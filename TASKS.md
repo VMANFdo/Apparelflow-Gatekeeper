@@ -234,7 +234,7 @@ git branch -d feat/database-schema
   ```
   ✅ `npm test` passes. | Commit: `feat(domain): add multiplier engine and order schema`
 
-- [ ] **T18: Orders service and endpoints**
+- [x] **T18: Orders service and endpoints**
   🌿 **Branch:** `feat/order-creation-api`
   ```text
   Follow SKILLS.md skills 4 and 6. Create src/server/services/orders.ts createOrder(db, actor, input): in ONE transaction insert
