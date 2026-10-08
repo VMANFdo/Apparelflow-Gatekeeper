@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { asc, count, eq } from 'drizzle-orm'
 import { cuttingOrders, verificationItems, verificationLogs, type OrderStatus } from '@/db/schema'
 import { BusinessRuleError, ConflictError, NotFoundError, ValidationError } from '@/domain/errors'
 import { computeWastagePct } from '@/domain/wastage'
@@ -244,4 +244,124 @@ export async function rejectOrder(
       logId: log.id,
     }
   })
+}
+
+export interface PendingQueueItem {
+  id: string
+  orderNo: string
+  targetQty: number
+  fabricRollId: string
+  createdAt: Date
+  createdByName: string | null
+  recipeName: string
+  recipeCode: string
+}
+
+export async function listPendingQueue(db: Db): Promise<PendingQueueItem[]> {
+  const orders = await db.query.cuttingOrders.findMany({
+    where: eq(cuttingOrders.status, 'PENDING_VERIFICATION'),
+    orderBy: [asc(cuttingOrders.createdAt)],
+    columns: {
+      id: true,
+      orderNo: true,
+      targetQty: true,
+      fabricRollId: true,
+      createdAt: true,
+    },
+    with: {
+      recipe: { columns: { name: true, recipeCode: true } },
+      createdByUser: { columns: { fullName: true } },
+    },
+  })
+
+  return orders.map((order) => ({
+    id: order.id,
+    orderNo: order.orderNo,
+    targetQty: order.targetQty,
+    fabricRollId: order.fabricRollId,
+    createdAt: order.createdAt,
+    createdByName: order.createdByUser?.fullName ?? null,
+    recipeName: order.recipe.name,
+    recipeCode: order.recipe.recipeCode,
+  }))
+}
+
+export async function countPendingOrders(db: Db): Promise<number> {
+  const [row] = await db
+    .select({ value: count() })
+    .from(cuttingOrders)
+    .where(eq(cuttingOrders.status, 'PENDING_VERIFICATION'))
+  return row?.value ?? 0
+}
+
+export interface VerificationContext {
+  order: {
+    id: string
+    orderNo: string
+    status: OrderStatus
+    targetQty: number
+    fabricRollId: string
+    actualFabricYds: number
+    expectedFabricYds: number
+    createdAt: Date
+    createdByName: string | null
+  }
+  recipe: {
+    id: string
+    recipeCode: string
+    name: string
+    stdFabricYards: number
+    wastageCap: number
+  }
+  items: VerificationItemState[]
+}
+
+export async function getVerificationContext(
+  db: Db,
+  orderId: string
+): Promise<VerificationContext | null> {
+  const order = await db.query.cuttingOrders.findFirst({
+    where: eq(cuttingOrders.id, orderId),
+    columns: {
+      id: true,
+      orderNo: true,
+      status: true,
+      targetQty: true,
+      fabricRollId: true,
+      actualFabricYds: true,
+      expectedFabricYds: true,
+      createdAt: true,
+    },
+    with: {
+      recipe: {
+        columns: { id: true, recipeCode: true, name: true, stdFabricYards: true, wastageCap: true },
+      },
+      createdByUser: { columns: { fullName: true } },
+    },
+  })
+  if (!order) return null
+
+  const items = await loadItems(db, order.id)
+
+  return {
+    order: {
+      id: order.id,
+      orderNo: order.orderNo,
+      status: order.status,
+      targetQty: order.targetQty,
+      fabricRollId: order.fabricRollId,
+      actualFabricYds: Number(order.actualFabricYds),
+      expectedFabricYds: Number(order.expectedFabricYds),
+      createdAt: order.createdAt,
+      createdByName: order.createdByUser?.fullName ?? null,
+    },
+    recipe: {
+      id: order.recipe.id,
+      recipeCode: order.recipe.recipeCode,
+      name: order.recipe.name,
+      stdFabricYards: Number(order.recipe.stdFabricYards),
+      wastageCap: Number(order.recipe.wastageCap),
+    },
+    items: items.map(toItemState),
+  }
 }

@@ -317,7 +317,7 @@ git branch -d feat/database-schema
 
 ## Phase 2: Verifier UI (about 3.5h)
 
-- [ ] **T25: Verifier queue page**
+- [x] **T25: Verifier queue page**
   🌿 **Branch:** `feat/verifier-terminal-ui`
   ```text
   Follow SKILLS.md skill 10. Build /verifier: list of PENDING_VERIFICATION orders (order_no, recipe, qty, submitted by, date)
@@ -325,7 +325,7 @@ git branch -d feat/database-schema
   ```
   ✅ Commit: `feat(ui): add verifier queue`
 
-- [ ] **T26: Verification terminal with traffic lights**
+- [x] **T26: Verification terminal with traffic lights**
   🌿 **Branch:** `feat/verifier-terminal-ui`
   ```text
   Follow SKILLS.md skills 5, 9, 10. Build /verifier/[orderId]: a table with one row per component showing name, expected, an actual
@@ -335,7 +335,7 @@ git branch -d feat/database-schema
   ```
   ✅ Typing a lower value turns the row red instantly. | Commit: `feat(ui): add verification terminal with traffic lights`
 
-- [ ] **T27: Approve and reject actions**
+- [x] **T27: Approve and reject actions**
   🌿 **Branch:** `feat/verifier-terminal-ui`
   ```text
   Follow SKILLS.md skills 7 and 10. Add 'Approve Batch' (disabled with an explanatory tooltip/message whenever any row is RED or uncounted)
