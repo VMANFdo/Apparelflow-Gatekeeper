@@ -12,3 +12,5 @@ if (!connectionString) {
 const client = postgres(connectionString, { prepare: false, max: 1 })
 
 export const db = drizzle(client, { schema })
+
+export type Db = typeof db

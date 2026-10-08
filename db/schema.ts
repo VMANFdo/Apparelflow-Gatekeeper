@@ -11,7 +11,7 @@ import {
   uniqueIndex,
   index,
 } from 'drizzle-orm/pg-core'
-import { sql } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
@@ -159,3 +159,58 @@ export type NewRecipeComponent = typeof recipeComponents.$inferInsert
 export type NewCuttingOrder = typeof cuttingOrders.$inferInsert
 export type NewVerificationItem = typeof verificationItems.$inferInsert
 export type NewVerificationLog = typeof verificationLogs.$inferInsert
+
+// ─── Relations (query-time only, no migration needed) ─────────────────────────
+
+export const recipesRelations = relations(recipes, ({ many }) => ({
+  components: many(recipeComponents),
+  orders: many(cuttingOrders),
+}))
+
+export const recipeComponentsRelations = relations(recipeComponents, ({ one }) => ({
+  recipe: one(recipes, {
+    fields: [recipeComponents.recipeId],
+    references: [recipes.id],
+  }),
+}))
+
+export const cuttingOrdersRelations = relations(cuttingOrders, ({ one, many }) => ({
+  recipe: one(recipes, {
+    fields: [cuttingOrders.recipeId],
+    references: [recipes.id],
+  }),
+  createdByUser: one(users, {
+    fields: [cuttingOrders.createdBy],
+    references: [users.id],
+    relationName: 'orderCreatedBy',
+  }),
+  sewingStartedByUser: one(users, {
+    fields: [cuttingOrders.sewingStartedBy],
+    references: [users.id],
+    relationName: 'orderSewingStartedBy',
+  }),
+  items: many(verificationItems),
+  logs: many(verificationLogs),
+}))
+
+export const verificationItemsRelations = relations(verificationItems, ({ one }) => ({
+  order: one(cuttingOrders, {
+    fields: [verificationItems.orderId],
+    references: [cuttingOrders.id],
+  }),
+  component: one(recipeComponents, {
+    fields: [verificationItems.componentId],
+    references: [recipeComponents.id],
+  }),
+}))
+
+export const verificationLogsRelations = relations(verificationLogs, ({ one }) => ({
+  order: one(cuttingOrders, {
+    fields: [verificationLogs.orderId],
+    references: [cuttingOrders.id],
+  }),
+  verifier: one(users, {
+    fields: [verificationLogs.verifierId],
+    references: [users.id],
+  }),
+}))
