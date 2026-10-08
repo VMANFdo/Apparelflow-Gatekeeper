@@ -51,7 +51,6 @@ export function LoginForm() {
       }
 
       router.push(ROLE_HOME[body.user.role as Role])
-      router.refresh()
     } catch {
       setFormError('Could not reach the server. Check your connection and try again.')
     } finally {
