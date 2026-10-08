@@ -1,12 +1,22 @@
-export default function VerifierQueuePage() {
+import { VerifierQueueTable } from '@/components/verification/queue-table'
+import { requireRolePage } from '@/server/auth/page-guard'
+import { db } from '@/server/db'
+import { listPendingQueue } from '@/server/services/verification'
+
+export default async function VerifierQueuePage() {
+  await requireRolePage('cutting_verifier')
+  const orders = await listPendingQueue(db)
+
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <h1 className="text-2xl font-semibold text-slate-900">Verification Queue</h1>
-      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <p className="text-sm text-slate-600">
-          Pending cutting orders awaiting verification will appear here.
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-slate-900">Verification Queue</h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Count and verify the pieces on each cutting order.
         </p>
       </div>
+
+      <VerifierQueueTable orders={orders} />
     </div>
   )
 }

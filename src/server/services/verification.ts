@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { asc, count, eq } from 'drizzle-orm'
 import { cuttingOrders, verificationItems, verificationLogs, type OrderStatus } from '@/db/schema'
 import { BusinessRuleError, ConflictError, NotFoundError, ValidationError } from '@/domain/errors'
 import { computeWastagePct } from '@/domain/wastage'
@@ -244,4 +244,52 @@ export async function rejectOrder(
       logId: log.id,
     }
   })
+}
+
+export interface PendingQueueItem {
+  id: string
+  orderNo: string
+  targetQty: number
+  fabricRollId: string
+  createdAt: Date
+  createdByName: string | null
+  recipeName: string
+  recipeCode: string
+}
+
+export async function listPendingQueue(db: Db): Promise<PendingQueueItem[]> {
+  const orders = await db.query.cuttingOrders.findMany({
+    where: eq(cuttingOrders.status, 'PENDING_VERIFICATION'),
+    orderBy: [asc(cuttingOrders.createdAt)],
+    columns: {
+      id: true,
+      orderNo: true,
+      targetQty: true,
+      fabricRollId: true,
+      createdAt: true,
+    },
+    with: {
+      recipe: { columns: { name: true, recipeCode: true } },
+      createdByUser: { columns: { fullName: true } },
+    },
+  })
+
+  return orders.map((order) => ({
+    id: order.id,
+    orderNo: order.orderNo,
+    targetQty: order.targetQty,
+    fabricRollId: order.fabricRollId,
+    createdAt: order.createdAt,
+    createdByName: order.createdByUser?.fullName ?? null,
+    recipeName: order.recipe.name,
+    recipeCode: order.recipe.recipeCode,
+  }))
+}
+
+export async function countPendingOrders(db: Db): Promise<number> {
+  const [row] = await db
+    .select({ value: count() })
+    .from(cuttingOrders)
+    .where(eq(cuttingOrders.status, 'PENDING_VERIFICATION'))
+  return row?.value ?? 0
 }

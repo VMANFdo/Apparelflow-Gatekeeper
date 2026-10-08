@@ -317,7 +317,7 @@ git branch -d feat/database-schema
 
 ## Phase 2: Verifier UI (about 3.5h)
 
-- [ ] **T25: Verifier queue page**
+- [x] **T25: Verifier queue page**
   🌿 **Branch:** `feat/verifier-terminal-ui`
   ```text
   Follow SKILLS.md skill 10. Build /verifier: list of PENDING_VERIFICATION orders (order_no, recipe, qty, submitted by, date)

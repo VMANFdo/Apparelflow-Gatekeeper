@@ -21,16 +21,19 @@ const NAV: Record<Role, NavItem[]> = {
 
 type AppShellProps = {
   user: { fullName: string; role: Role }
+  pendingCount?: number
   children: ReactNode
 }
 
 function SidebarContent({
   role,
   pathname,
+  pendingCount,
   onClose,
 }: {
   role: Role
   pathname: string
+  pendingCount: number
   onClose: () => void
 }) {
   return (
@@ -51,6 +54,7 @@ function SidebarContent({
         {NAV[role].map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
           const Icon = item.icon
+          const showBadge = role === 'cutting_verifier' && pendingCount > 0
           return (
             <Link
               key={item.href}
@@ -65,6 +69,16 @@ function SidebarContent({
             >
               <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
               {item.label}
+              {showBadge && (
+                <span
+                  aria-label={`${pendingCount} orders awaiting verification`}
+                  className={`ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-semibold ${
+                    active ? 'bg-white text-slate-900' : 'bg-amber-100 text-amber-900'
+                  }`}
+                >
+                  {pendingCount}
+                </span>
+              )}
             </Link>
           )
         })}
@@ -73,7 +87,7 @@ function SidebarContent({
   )
 }
 
-export function AppShell({ user, children }: AppShellProps) {
+export function AppShell({ user, pendingCount = 0, children }: AppShellProps) {
   const router = useRouter()
   const pathname = usePathname()
   const toast = useToast()
@@ -102,7 +116,12 @@ export function AppShell({ user, children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-slate-50">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-slate-200 bg-white md:block">
-        <SidebarContent role={user.role} pathname={pathname} onClose={() => setSidebarOpen(false)} />
+        <SidebarContent
+          role={user.role}
+          pathname={pathname}
+          pendingCount={pendingCount}
+          onClose={() => setSidebarOpen(false)}
+        />
       </aside>
 
       {sidebarOpen && (
@@ -114,7 +133,12 @@ export function AppShell({ user, children }: AppShellProps) {
             className="absolute inset-0 bg-slate-900/40"
           />
           <aside className="absolute inset-y-0 left-0 w-64 bg-white shadow-lg">
-            <SidebarContent role={user.role} pathname={pathname} onClose={() => setSidebarOpen(false)} />
+            <SidebarContent
+              role={user.role}
+              pathname={pathname}
+              pendingCount={pendingCount}
+              onClose={() => setSidebarOpen(false)}
+            />
           </aside>
         </div>
       )}
