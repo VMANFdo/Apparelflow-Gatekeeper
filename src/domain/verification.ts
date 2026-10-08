@@ -114,3 +114,13 @@ export const approveOrderSchema = z.object({
 })
 
 export type ApproveOrderInput = z.infer<typeof approveOrderSchema>
+
+export const rejectOrderSchema = z.object({
+  note: z
+    .string({ message: 'note must be a string' })
+    .trim()
+    .min(5, 'note must be at least 5 characters')
+    .max(500, 'note must be at most 500 characters'),
+})
+
+export type RejectOrderInput = z.infer<typeof rejectOrderSchema>
