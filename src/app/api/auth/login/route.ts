@@ -1,20 +1,15 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { z } from 'zod'
 import bcrypt from 'bcryptjs'
 import { eq } from 'drizzle-orm'
 import { db } from '@/server/db'
 import { users } from '@/db/schema'
 import { handle } from '@/server/http/handler'
 import { UnauthorizedError } from '@/domain/errors'
+import { loginSchema } from '@/domain/auth'
 import { signSession, setSessionCookie } from '@/server/auth/session'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-
-const loginSchema = z.object({
-  email: z.string().trim().min(3).max(254).email(),
-  password: z.string().min(1).max(128),
-})
 
 // Real bcrypt hash compared against when the email does not exist, so the
 // response time does not reveal whether an account is registered.

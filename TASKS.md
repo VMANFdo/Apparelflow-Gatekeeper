@@ -203,8 +203,8 @@ git branch -d feat/database-schema
   ✅ Commit: `feat(auth): add requireRole guard and origin check`
   🔀 **Last task on this branch:** push, open PR "`feat(auth): add session auth, RBAC guard and typed errors`", self-review the diff, merge (merge commit, not squash), delete branch.
 
-- [ ] **T15: Login page with demo credentials panel**
-  🌿 **Branch:** `feat/login-page-app-shell`
+- [x] **T15: Login page with demo credentials panel**
+  🌿 **Branch:** `feat/login-page-app`
   ```text
   Follow SKILLS.md skills 9 and 10. Build /login: a clean centered card with email and password inputs (inline errors),
   and a 'Demo accounts' panel listing the 3 roles with a 'Sign in as' button each. Buttons call the real /api/auth/login.
@@ -212,8 +212,8 @@ git branch -d feat/database-schema
   ```
   ✅ All three one-click logins work. Inputs readable. | Commit: `feat(ui): add login page with demo credential panel`
 
-- [ ] **T16: App shell and role switcher**
-  🌿 **Branch:** `feat/login-page-app-shell`
+- [x] **T16: App shell and role switcher**
+  🌿 **Branch:** `feat/login-page-app`
   ```text
   Follow SKILLS.md skill 10. Create an authenticated layout: left sidebar with nav items shown per role, top bar with user full name,
   role badge and a 'Switch role' menu (signs out, returns to /login). On mobile the sidebar collapses into a menu.
@@ -454,7 +454,7 @@ git branch -d feat/database-schema
 | 4 | `feat/app-skeleton-security-headers` | T08, T09 |
 | 5 | `chore/vercel-deployment` | T10 |
 | 6 | `feat/auth-session-api` | T11, T12, T13, T14 |
-| 7 | `feat/login-page-app-shell` | T15, T16 |
+| 7 | `feat/login-page-app` | T15, T16 |
 | 8 | `feat/order-creation-api` | T17, T18 |
 | 9 | `feat/supervisor-orders-ui` | T19, T20 |
 | 10 | `feat/verification-domain-rules` | T21 |

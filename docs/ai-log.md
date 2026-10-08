@@ -21,6 +21,7 @@ _Add a row here each time you catch an AI mistake. Be specific: file name, what 
 |---|---|---|---|
 | 1 | `src/server/auth/session.ts` | Assumed the `@/*` tsconfig alias covered the repo-root `db/` folder and wrote `import { users } from '@/db/schema'` — resolution failed (`Cannot find module '@/db/schema'`) in `npm test`. | Added a dedicated `"@/db/*": ["./db/*"]` path in `tsconfig.json` and a matching `/^@\/db\//` alias in `vitest.config.ts`, so the whole team can import the schema by alias instead of fragile relative paths. |
 | 2 | `tests/session.test.ts` | Passed `{ alg: 'HS384' }` as the second argument to jose's `SignJWT.sign()` — `SignOptions` has no `alg` field, so `tsc --noEmit` failed. | Set the algorithm in the protected header only (`.setProtectedHeader({ alg: 'HS384' })`) and let jose derive the signing algorithm from it. |
+| 3 | `src/components/app-shell.tsx` | Defined `SidebarContent` as a function *inside* the `AppShell` component body and rendered it twice — every render created a new component type, remounting the sidebar and losing its state; failed ESLint `react-hooks/static-components`. | Extracted `SidebarContent` to a module-level component taking `role`, `pathname` and `onClose` as props, so React reuses the same component identity across renders. |
 
 ---
 
