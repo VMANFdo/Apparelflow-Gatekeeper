@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import Image from 'next/image'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import type { LucideIcon } from 'lucide-react'
 import { ChevronDown, ClipboardCheck, LogOut, Menu, Scissors, Shirt, X } from 'lucide-react'
@@ -34,9 +35,7 @@ function SidebarContent({
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-14 items-center gap-2 border-b border-slate-200 px-4">
-        <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-xs font-bold text-white">
-          AF
-        </span>
+        <Image src="/logo.jpg" alt="ApparelFlow ERP" width={32} height={32} className="h-8 w-8 rounded-lg object-cover" />
         <span className="text-sm font-semibold text-slate-900">ApparelFlow ERP</span>
         <button
           type="button"
@@ -87,7 +86,7 @@ export function AppShell({ user, children }: AppShellProps) {
     return () => window.removeEventListener('keydown', onKey)
   }, [sidebarOpen])
 
-  async function switchRole() {
+  async function signOut() {
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
     } catch {
@@ -129,16 +128,16 @@ export function AppShell({ user, children }: AppShellProps) {
             <Menu className="h-5 w-5" aria-hidden="true" />
           </button>
 
-          <div className="ml-auto flex items-center gap-4">
-            <div className="hidden text-right sm:block">
-              <div className="text-sm font-medium text-slate-900">{user.fullName}</div>
-              <span
-                className={`inline-block rounded-full border px-2 py-0.5 text-xs font-medium ${ROLE_BADGE_CLASSES[user.role]}`}
-              >
-                {ROLE_LABELS[user.role]}
-              </span>
-            </div>
+          <div className="text-left">
+            <div className="text-sm font-medium text-slate-900">{user.fullName}</div>
+            <span
+              className={`inline-block rounded-full border px-2 py-0.5 text-xs font-medium ${ROLE_BADGE_CLASSES[user.role]}`}
+            >
+              {ROLE_LABELS[user.role]}
+            </span>
+          </div>
 
+          <div className="ml-auto flex items-center gap-4">
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
                 <button
@@ -158,7 +157,7 @@ export function AppShell({ user, children }: AppShellProps) {
                     Signed in as {ROLE_LABELS[user.role]}
                   </DropdownMenu.Label>
                   <DropdownMenu.Item
-                    onSelect={() => void switchRole()}
+                    onSelect={() => void signOut()}
                     className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-900 outline-none data-[highlighted]:bg-slate-100"
                   >
                     <LogOut className="h-4 w-4" aria-hidden="true" />
@@ -167,6 +166,16 @@ export function AppShell({ user, children }: AppShellProps) {
                 </DropdownMenu.Content>
               </DropdownMenu.Portal>
             </DropdownMenu.Root>
+
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              aria-label="Log out"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+            >
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Log out</span>
+            </button>
           </div>
         </header>
 

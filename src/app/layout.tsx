@@ -18,6 +18,11 @@ export const metadata: Metadata = {
     template: "%s · ApparelFlow ERP",
   },
   description: "Production batch verification and sewing queue gate",
+  icons: {
+    icon: "/logo.jpg",
+    shortcut: "/logo.jpg",
+    apple: "/logo.jpg",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
