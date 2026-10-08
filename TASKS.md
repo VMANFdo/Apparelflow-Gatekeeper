@@ -335,7 +335,7 @@ git branch -d feat/database-schema
   ```
   ✅ Typing a lower value turns the row red instantly. | Commit: `feat(ui): add verification terminal with traffic lights`
 
-- [ ] **T27: Approve and reject actions**
+- [x] **T27: Approve and reject actions**
   🌿 **Branch:** `feat/verifier-terminal-ui`
   ```text
   Follow SKILLS.md skills 7 and 10. Add 'Approve Batch' (disabled with an explanatory tooltip/message whenever any row is RED or uncounted)

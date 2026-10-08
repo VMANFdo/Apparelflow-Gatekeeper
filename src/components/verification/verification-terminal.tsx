@@ -12,12 +12,15 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
+  canApprove,
   evaluateComponent,
+  listBlockingItems,
   VERDICT_BADGE_CLASSES,
   VERDICT_LABELS,
   type ComponentVerdict,
 } from '@/domain/verification'
 import { useToast } from '@/components/ui/toast'
+import { ApproveBar } from '@/components/verification/approve-bar'
 import type { VerificationContext } from '@/server/services/verification'
 
 const BLOCKED_INT_KEYS = new Set(['e', 'E', '+', '-', '.', ' '])
@@ -83,6 +86,28 @@ export function VerificationTerminal({ context }: { context: VerificationContext
 
   const hasErrors = context.items.some((item) => parsed[item.component_id]?.error !== null)
   const allEmpty = context.items.every((item) => parsed[item.component_id]?.value === null)
+
+  const localItems = context.items.map((item) => ({
+    componentId: item.component_id,
+    componentName: item.component_name,
+    expectedQty: item.expected_qty,
+    actualQty: parsed[item.component_id]?.value ?? null,
+  }))
+  const canApproveNow = canApprove(localItems)
+  const blocking = listBlockingItems(localItems)
+  const blockedSummary =
+    blocking.length === 0
+      ? ''
+      : (() => {
+          const shortages = blocking.filter((b) => b.verdict === 'RED').length
+          const uncounted = blocking.filter((b) => b.verdict === 'UNCOUNTED').length
+          const parts: string[] = []
+          if (shortages > 0) parts.push(`${shortages} shortage${shortages > 1 ? 's' : ''}`)
+          if (uncounted > 0) {
+            parts.push(`${uncounted} component${uncounted > 1 ? 's' : ''} not counted`)
+          }
+          return parts.join(' and ')
+        })()
 
   function handleChange(componentId: string, event: ChangeEvent<HTMLInputElement>) {
     const raw = event.target.value
@@ -300,6 +325,12 @@ export function VerificationTerminal({ context }: { context: VerificationContext
           )}
         </button>
       </div>
+
+      <ApproveBar
+        orderId={context.order.id}
+        canApproveNow={canApproveNow}
+        blockedSummary={blockedSummary}
+      />
     </div>
   )
 }
