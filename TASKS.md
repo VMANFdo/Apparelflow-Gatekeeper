@@ -273,7 +273,7 @@ git branch -d feat/database-schema
 
 ## Phase 1: Gatekeeper backend (about 4h)
 
-- [ ] **T21: Domain rules (traffic light, transitions, wastage)**
+- [x] **T21: Domain rules (traffic light, transitions, wastage)**
   🌿 **Branch:** `feat/verification-domain-rules`
   ```text
   Follow SKILLS.md skill 5. Create src/domain/verification.ts: evaluateComponent(expected, actual|null) returning
