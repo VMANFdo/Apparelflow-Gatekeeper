@@ -1,4 +1,4 @@
-import { asc, count, eq } from 'drizzle-orm'
+import { asc, count, desc, eq, inArray } from 'drizzle-orm'
 import { cuttingOrders, verificationItems, verificationLogs, type OrderStatus } from '@/db/schema'
 import { BusinessRuleError, ConflictError, NotFoundError, ValidationError } from '@/domain/errors'
 import { computeWastagePct } from '@/domain/wastage'
@@ -292,6 +292,100 @@ export async function countPendingOrders(db: Db): Promise<number> {
     .from(cuttingOrders)
     .where(eq(cuttingOrders.status, 'PENDING_VERIFICATION'))
   return row?.value ?? 0
+}
+
+export interface VerifiedHistoryItem {
+  id: string
+  orderNo: string
+  targetQty: number
+  recipeName: string
+  recipeCode: string
+  decisionAt: Date
+  verifierName: string | null
+  wastagePct: number
+  approvalNote: string | null
+}
+
+export interface RejectedHistoryItem {
+  id: string
+  orderNo: string
+  targetQty: number
+  recipeName: string
+  recipeCode: string
+  decisionAt: Date
+  verifierName: string | null
+  rejectionNote: string | null
+  attemptNo: number
+}
+
+export interface VerifierHistory {
+  verified: VerifiedHistoryItem[]
+  rejected: RejectedHistoryItem[]
+}
+
+export async function listVerifierHistory(db: Db, limit = 20): Promise<VerifierHistory> {
+  const orders = await db.query.cuttingOrders.findMany({
+    where: inArray(cuttingOrders.status, ['VERIFIED', 'REJECTED']),
+    orderBy: [desc(cuttingOrders.createdAt)],
+    columns: { id: true, orderNo: true, status: true, targetQty: true },
+    with: {
+      recipe: { columns: { name: true, recipeCode: true } },
+      logs: {
+        orderBy: [desc(verificationLogs.createdAt)],
+        columns: {
+          decision: true,
+          rejectionNote: true,
+          approvalNote: true,
+          wastagePct: true,
+          attemptNo: true,
+          createdAt: true,
+        },
+        with: {
+          verifier: { columns: { fullName: true } },
+        },
+      },
+    },
+  })
+
+  const verified: VerifiedHistoryItem[] = []
+  const rejected: RejectedHistoryItem[] = []
+
+  for (const order of orders) {
+    const base = {
+      id: order.id,
+      orderNo: order.orderNo,
+      targetQty: order.targetQty,
+      recipeName: order.recipe.name,
+      recipeCode: order.recipe.recipeCode,
+    }
+
+    if (order.status === 'VERIFIED') {
+      const log = order.logs.find((entry) => entry.decision === 'APPROVED')
+      if (!log) continue
+      verified.push({
+        ...base,
+        decisionAt: log.createdAt,
+        verifierName: log.verifier?.fullName ?? null,
+        wastagePct: Number(log.wastagePct),
+        approvalNote: log.approvalNote,
+      })
+    } else {
+      const log = order.logs.find((entry) => entry.decision === 'REJECTED')
+      if (!log) continue
+      rejected.push({
+        ...base,
+        decisionAt: log.createdAt,
+        verifierName: log.verifier?.fullName ?? null,
+        rejectionNote: log.rejectionNote,
+        attemptNo: log.attemptNo,
+      })
+    }
+  }
+
+  return {
+    verified: verified.slice(0, limit),
+    rejected: rejected.slice(0, limit),
+  }
 }
 
 export interface VerificationContext {
