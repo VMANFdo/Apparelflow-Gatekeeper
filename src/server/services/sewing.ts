@@ -1,5 +1,6 @@
-import { and, eq } from 'drizzle-orm'
-import { cuttingOrders, verificationLogs } from '@/db/schema'
+import { alias } from 'drizzle-orm/pg-core'
+import { and, asc, eq } from 'drizzle-orm'
+import { cuttingOrders, recipes, users, verificationLogs } from '@/db/schema'
 import { ConflictError, NotFoundError } from '@/domain/errors'
 import type { SessionUser } from '@/server/auth/session'
 import type { Db } from '@/server/db'
@@ -46,35 +47,43 @@ export interface SewingQueueDetailItem extends SewingQueueItem {
 // Hard-codes WHERE status = 'VERIFIED'. Zero URL params are accepted or passed.
 
 export async function listVerifiedQueue(db: Db): Promise<SewingQueueItem[]> {
-  const orders = await db.query.cuttingOrders.findMany({
-    where: eq(cuttingOrders.status, 'VERIFIED'),
-    orderBy: (t, { asc }) => [asc(t.createdAt)],
-    columns: {
-      id: true,
-      orderNo: true,
-      targetQty: true,
-      fabricRollId: true,
-      actualFabricYds: true,
-      expectedFabricYds: true,
-      createdAt: true,
-      sewingStartedAt: true,
-    },
-    with: {
-      recipe: {
-        columns: { id: true, recipeCode: true, name: true, category: true, wastageCap: true },
-      },
-      sewingStartedByUser: { columns: { fullName: true } },
-      logs: {
-        where: eq(verificationLogs.decision, 'APPROVED'),
-        columns: { createdAt: true, wastagePct: true, approvalNote: true },
-        with: { verifier: { columns: { fullName: true } } },
-        limit: 1, // partial unique index guarantees at most one APPROVED log per order
-      },
-    },
-  })
+  const sewingStartedBy = alias(users, 'sewing_started_by')
+  const orders = await db
+    .select({
+      id: cuttingOrders.id,
+      orderNo: cuttingOrders.orderNo,
+      targetQty: cuttingOrders.targetQty,
+      fabricRollId: cuttingOrders.fabricRollId,
+      actualFabricYds: cuttingOrders.actualFabricYds,
+      expectedFabricYds: cuttingOrders.expectedFabricYds,
+      createdAt: cuttingOrders.createdAt,
+      sewingStartedAt: cuttingOrders.sewingStartedAt,
+      recipeId: recipes.id,
+      recipeCode: recipes.recipeCode,
+      recipeName: recipes.name,
+      recipeCategory: recipes.category,
+      recipeWastageCap: recipes.wastageCap,
+      verifiedAt: verificationLogs.createdAt,
+      verifierName: users.fullName,
+      approvalNote: verificationLogs.approvalNote,
+      wastagePct: verificationLogs.wastagePct,
+      sewingStartedByName: sewingStartedBy.fullName,
+    })
+    .from(cuttingOrders)
+    .innerJoin(
+      verificationLogs,
+      and(
+        eq(verificationLogs.orderId, cuttingOrders.id),
+        eq(verificationLogs.decision, 'APPROVED')
+      )
+    )
+    .innerJoin(recipes, eq(recipes.id, cuttingOrders.recipeId))
+    .innerJoin(users, eq(users.id, verificationLogs.verifierId))
+    .leftJoin(sewingStartedBy, eq(sewingStartedBy.id, cuttingOrders.sewingStartedBy))
+    .where(eq(cuttingOrders.status, 'VERIFIED'))
+    .orderBy(asc(verificationLogs.createdAt), asc(cuttingOrders.orderNo))
 
   return orders.map((order) => {
-    const approvedLog = order.logs[0]
     return {
       id: order.id,
       orderNo: order.orderNo,
@@ -83,19 +92,19 @@ export async function listVerifiedQueue(db: Db): Promise<SewingQueueItem[]> {
       actualFabricYds: Number(order.actualFabricYds),
       expectedFabricYds: Number(order.expectedFabricYds),
       createdAt: order.createdAt,
-      verifiedAt: approvedLog?.createdAt ?? order.createdAt,
-      verifierName: approvedLog?.verifier?.fullName ?? null,
-      approvalNote: approvedLog?.approvalNote ?? null,
-      wastagePct: approvedLog ? Number(approvedLog.wastagePct) : 0,
+      verifiedAt: order.verifiedAt,
+      verifierName: order.verifierName,
+      approvalNote: order.approvalNote,
+      wastagePct: Number(order.wastagePct),
       recipe: {
-        id: order.recipe.id,
-        recipeCode: order.recipe.recipeCode,
-        name: order.recipe.name,
-        category: order.recipe.category,
-        wastageCap: Number(order.recipe.wastageCap),
+        id: order.recipeId,
+        recipeCode: order.recipeCode,
+        name: order.recipeName,
+        category: order.recipeCategory,
+        wastageCap: Number(order.recipeWastageCap),
       },
       sewingStartedAt: order.sewingStartedAt,
-      sewingStartedByName: order.sewingStartedByUser?.fullName ?? null,
+      sewingStartedByName: order.sewingStartedByName,
     }
   })
 }

@@ -103,7 +103,7 @@ export async function listOrders(db: Db, actor: SessionUser): Promise<OrderListI
       actor.role === 'cutting_verifier'
         ? eq(cuttingOrders.status, 'PENDING_VERIFICATION')
         : undefined,
-    orderBy: [desc(cuttingOrders.createdAt)],
+    orderBy: [desc(cuttingOrders.createdAt), desc(cuttingOrders.orderNo)],
     with: {
       recipe: true,
       createdByUser: { columns: { fullName: true } },
