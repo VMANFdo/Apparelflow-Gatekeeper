@@ -260,7 +260,7 @@ export interface PendingQueueItem {
 export async function listPendingQueue(db: Db): Promise<PendingQueueItem[]> {
   const orders = await db.query.cuttingOrders.findMany({
     where: eq(cuttingOrders.status, 'PENDING_VERIFICATION'),
-    orderBy: [asc(cuttingOrders.createdAt)],
+    orderBy: [asc(cuttingOrders.createdAt), asc(cuttingOrders.orderNo)],
     columns: {
       id: true,
       orderNo: true,
