@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { ClipboardCheck, Loader2, LogIn, Scissors, Shirt } from 'lucide-react'
+import { ClipboardCheck, Eye, EyeOff, Loader2, LogIn, Scissors, Shirt } from 'lucide-react'
 import { loginSchema } from '@/domain/auth'
 import { ROLE_HOME, ROLE_LABELS } from '@/domain/roles'
 import type { Role } from '@/db/schema'
@@ -19,6 +19,7 @@ export function LoginForm() {
   const toast = useToast()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [emailError, setEmailError] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
@@ -117,21 +118,36 @@ export function LoginForm() {
           <label htmlFor="password" className="block text-sm font-medium text-slate-900">
             Password
           </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value)
-              setPasswordError(null)
-            }}
-            aria-invalid={passwordError ? true : undefined}
-            aria-describedby={passwordError ? 'password-error' : undefined}
-            className="mt-1 w-full rounded-lg px-3 py-2 text-sm"
-            placeholder="Your password"
-          />
+          <div className="relative mt-1">
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                setPasswordError(null)
+              }}
+              aria-invalid={passwordError ? true : undefined}
+              aria-describedby={passwordError ? 'password-error' : undefined}
+              className="w-full rounded-lg px-3 py-2 pr-10 text-sm"
+              placeholder="Your password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              title={showPassword ? 'Hide password' : 'Show password'}
+              className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-600 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-slate-900"
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <Eye className="h-4 w-4" aria-hidden="true" />
+              )}
+            </button>
+          </div>
           {passwordError && (
             <p id="password-error" role="alert" className="mt-1 text-sm text-red-700">
               {passwordError}
