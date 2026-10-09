@@ -97,27 +97,31 @@ export const countEntrySchema = z.object({
     .max(1000000, 'actual_qty must be at most 1000000'),
 })
 
-export const saveCountsSchema = z
-  .object({
-    counts: z
-      .array(countEntrySchema)
-      .min(1, 'counts must contain at least one component'),
-  })
-  .superRefine((value, ctx) => {
-    const seen = new Set<string>()
-    value.counts.forEach((entry, index) => {
-      if (seen.has(entry.component_id)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['counts', index, 'component_id'],
-          message: 'component_id appears more than once',
-        })
-      }
-      seen.add(entry.component_id)
+function countsSchema(min: number) {
+  return z
+    .array(countEntrySchema)
+    .min(min, 'counts must contain at least one component')
+    .superRefine((value, ctx) => {
+      const seen = new Set<string>()
+      value.forEach((entry, index) => {
+        if (seen.has(entry.component_id)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [index, 'component_id'],
+            message: 'component_id appears more than once',
+          })
+        }
+        seen.add(entry.component_id)
+      })
     })
-  })
+}
+
+export const saveCountsSchema = z.object({
+  counts: countsSchema(1),
+})
 
 export type SaveCountsInput = z.infer<typeof saveCountsSchema>
+export type CountEntry = z.infer<typeof countEntrySchema>
 
 export const approveOrderSchema = z.object({
   approval_note: z
@@ -125,6 +129,7 @@ export const approveOrderSchema = z.object({
     .trim()
     .max(500, 'approval_note must be at most 500 characters')
     .optional(),
+  counts: countsSchema(0).optional(),
 })
 
 export type ApproveOrderInput = z.infer<typeof approveOrderSchema>
@@ -135,6 +140,7 @@ export const rejectOrderSchema = z.object({
     .trim()
     .min(5, 'note must be at least 5 characters')
     .max(500, 'note must be at most 500 characters'),
+  counts: countsSchema(0).optional(),
 })
 
 export type RejectOrderInput = z.infer<typeof rejectOrderSchema>

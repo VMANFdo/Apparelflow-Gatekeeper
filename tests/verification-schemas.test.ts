@@ -115,6 +115,44 @@ describe('approveOrderSchema', () => {
   it('rejects a note sent as a number', () => {
     expect(() => approveOrderSchema.parse({ approval_note: 42 })).toThrow()
   })
+
+  it('accepts an optional counts array alongside the note', () => {
+    const parsed = approveOrderSchema.parse({
+      approval_note: 'All counts verified.',
+      counts: [{ component_id: componentId, actual_qty: 40 }],
+    })
+    expect(parsed.counts).toEqual([{ component_id: componentId, actual_qty: 40 }])
+  })
+
+  it('accepts a body with no counts at all', () => {
+    const parsed = approveOrderSchema.parse({ approval_note: 'Fine' })
+    expect(parsed).toEqual({ approval_note: 'Fine' })
+    expect(parsed).not.toHaveProperty('counts')
+  })
+
+  it('accepts an explicitly empty counts array', () => {
+    expect(approveOrderSchema.parse({ counts: [] }).counts).toEqual([])
+  })
+
+  it('rejects a duplicate component id in counts', () => {
+    expect(() =>
+      approveOrderSchema.parse({
+        counts: [
+          { component_id: componentId, actual_qty: 40 },
+          { component_id: componentId, actual_qty: 41 },
+        ],
+      })
+    ).toThrow()
+  })
+
+  it('rejects an invalid count entry', () => {
+    expect(() =>
+      approveOrderSchema.parse({ counts: [{ component_id: componentId, actual_qty: -1 }] })
+    ).toThrow()
+    expect(() =>
+      approveOrderSchema.parse({ counts: [{ component_id: 'not-a-uuid', actual_qty: 1 }] })
+    ).toThrow()
+  })
 })
 
 describe('rejectOrderSchema', () => {
@@ -151,5 +189,39 @@ describe('rejectOrderSchema', () => {
 
   it('rejects a note sent as a number', () => {
     expect(() => rejectOrderSchema.parse({ note: 42 })).toThrow()
+  })
+
+  it('still requires a note when counts are provided', () => {
+    expect(() =>
+      rejectOrderSchema.parse({ counts: [{ component_id: componentId, actual_qty: 40 }] })
+    ).toThrow()
+  })
+
+  it('accepts an optional counts array alongside the note', () => {
+    const parsed = rejectOrderSchema.parse({
+      note: 'Roll damaged near the edge.',
+      counts: [{ component_id: componentId, actual_qty: 40 }],
+    })
+    expect(parsed).toEqual({
+      note: 'Roll damaged near the edge.',
+      counts: [{ component_id: componentId, actual_qty: 40 }],
+    })
+  })
+
+  it('accepts a note with no counts', () => {
+    const parsed = rejectOrderSchema.parse({ note: 'Fabric rolled before cutting.' })
+    expect(parsed).not.toHaveProperty('counts')
+  })
+
+  it('rejects a duplicate component id in counts', () => {
+    expect(() =>
+      rejectOrderSchema.parse({
+        note: 'Roll damaged near the edge.',
+        counts: [
+          { component_id: componentId, actual_qty: 40 },
+          { component_id: componentId, actual_qty: 41 },
+        ],
+      })
+    ).toThrow()
   })
 })

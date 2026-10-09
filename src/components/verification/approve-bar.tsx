@@ -5,14 +5,16 @@ import { useRouter } from 'next/navigation'
 import { Ban, Loader2, ShieldCheck } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
 import { RejectDialog } from '@/components/verification/reject-dialog'
+import type { CountEntry } from '@/domain/verification'
 
 type ApproveBarProps = {
   orderId: string
   canApproveNow: boolean
   blockedSummary: string
+  counts: CountEntry[]
 }
 
-export function ApproveBar({ orderId, canApproveNow, blockedSummary }: ApproveBarProps) {
+export function ApproveBar({ orderId, canApproveNow, blockedSummary, counts }: ApproveBarProps) {
   const router = useRouter()
   const toast = useToast()
   const [approving, setApproving] = useState(false)
@@ -25,7 +27,11 @@ export function ApproveBar({ orderId, canApproveNow, blockedSummary }: ApproveBa
     setApproving(true)
     setDecisionError(null)
     try {
-      const res = await fetch(`/api/verification/${orderId}/approve`, { method: 'POST' })
+      const res = await fetch(`/api/verification/${orderId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ counts }),
+      })
       const body = await res.json().catch(() => null)
 
       if (!res.ok) {
@@ -63,8 +69,8 @@ export function ApproveBar({ orderId, canApproveNow, blockedSummary }: ApproveBa
     <div className="mt-6 border-t border-slate-200 pt-6">
       <h2 className="text-sm font-semibold text-slate-900">Decision</h2>
       <p className="mt-1 text-xs text-slate-500">
-        Approve only when every row is green or yellow. Rejected orders go back to the supervisor
-        with your reason.
+        Approve only when every row is green or yellow. Approving saves the counts you entered, so
+        you can skip Save counts. Rejected orders go back to the supervisor with your reason.
       </p>
 
       {decisionError && (
@@ -125,6 +131,7 @@ export function ApproveBar({ orderId, canApproveNow, blockedSummary }: ApproveBa
         open={rejectOpen}
         onOpenChange={setRejectOpen}
         orderId={orderId}
+        counts={counts}
         onRejected={handleRejected}
       />
     </div>
