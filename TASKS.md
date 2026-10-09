@@ -351,7 +351,7 @@ git branch -d feat/database-schema
 
 ## Phase 1: Sewing handoff and wastage view (about 3.5h)
 
-- [ ] **T28: Sewing endpoints**
+- [x] **T28: Sewing endpoints**
   🌿 **Branch:** `feat/sewing-queue-api`
   ```text
   Follow SKILLS.md skill 8. GET /api/sewing/queue (sewing_supervisor only): query hard-coded with WHERE status = 'VERIFIED',
@@ -363,7 +363,7 @@ git branch -d feat/database-schema
   ✅ Try `?status=PENDING_VERIFICATION` and confirm it is ignored. | Commit: `feat(api): add sewing queue with isolated query`
   🔀 **Last task on this branch:** push, open PR "`feat(api): add isolated sewing queue endpoints`", self-review the diff, merge (merge commit, not squash), delete branch.
 
-- [ ] **T29: Sewing UI**
+- [x] **T29: Sewing UI**
   🌿 **Branch:** `feat/sewing-queue-ui`
   ```text
   Follow SKILLS.md skill 10. Build /sewing (queue cards) and /sewing/[orderId] (detail): piece counts with variance, verifier name and
