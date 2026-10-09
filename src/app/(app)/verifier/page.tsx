@@ -1,11 +1,12 @@
+import { VerifierHistory } from '@/components/verification/history-table'
 import { VerifierQueueTable } from '@/components/verification/queue-table'
 import { requireRolePage } from '@/server/auth/page-guard'
 import { db } from '@/server/db'
-import { listPendingQueue } from '@/server/services/verification'
+import { listPendingQueue, listVerifierHistory } from '@/server/services/verification'
 
 export default async function VerifierQueuePage() {
   await requireRolePage('cutting_verifier')
-  const orders = await listPendingQueue(db)
+  const [orders, history] = await Promise.all([listPendingQueue(db), listVerifierHistory(db)])
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
@@ -17,6 +18,7 @@ export default async function VerifierQueuePage() {
       </div>
 
       <VerifierQueueTable orders={orders} />
+      <VerifierHistory history={history} />
     </div>
   )
 }
