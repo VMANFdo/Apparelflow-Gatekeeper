@@ -18,6 +18,7 @@ import {
   VERDICT_BADGE_CLASSES,
   VERDICT_LABELS,
   type ComponentVerdict,
+  type CountEntry,
 } from '@/domain/verification'
 import { useToast } from '@/components/ui/toast'
 import { ApproveBar } from '@/components/verification/approve-bar'
@@ -93,6 +94,16 @@ export function VerificationTerminal({ context }: { context: VerificationContext
     expectedQty: item.expected_qty,
     actualQty: parsed[item.component_id]?.value ?? null,
   }))
+
+  const pendingCounts = useMemo<CountEntry[]>(
+    () =>
+      context.items.flatMap((item) => {
+        const value = parsed[item.component_id]?.value ?? null
+        return value === null ? [] : [{ component_id: item.component_id, actual_qty: value }]
+      }),
+    [context.items, parsed]
+  )
+
   const canApproveNow = canApprove(localItems)
   const blocking = listBlockingItems(localItems)
   const blockedSummary =
@@ -127,16 +138,11 @@ export function VerificationTerminal({ context }: { context: VerificationContext
     setSaving(true)
     setServerError(null)
 
-    const counts = context.items.flatMap((item) => {
-      const value = parsed[item.component_id]?.value ?? null
-      return value === null ? [] : [{ component_id: item.component_id, actual_qty: value }]
-    })
-
     try {
       const res = await fetch(`/api/verification/${context.order.id}/counts`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ counts }),
+        body: JSON.stringify({ counts: pendingCounts }),
       })
       const body = await res.json().catch(() => null)
 
@@ -330,6 +336,7 @@ export function VerificationTerminal({ context }: { context: VerificationContext
         orderId={context.order.id}
         canApproveNow={canApproveNow}
         blockedSummary={blockedSummary}
+        counts={pendingCounts}
       />
     </div>
   )

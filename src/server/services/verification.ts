@@ -82,35 +82,45 @@ export function assertPending(order: { status: OrderStatus }): void {
   }
 }
 
+export async function applyCounts(
+  tx: Tx,
+  orderId: string,
+  counts: { component_id: string; actual_qty: number }[]
+): Promise<VerificationItemRow[]> {
+  const items = await loadItems(tx, orderId)
+  const byId = new Map(items.map((item) => [item.componentId, item]))
+
+  const unknownIds = counts
+    .filter((entry) => !byId.has(entry.component_id))
+    .map((entry) => entry.component_id)
+  if (unknownIds.length > 0) {
+    throw new ValidationError(
+      'Some component ids do not belong to this order',
+      unknownIds.map((id) => `component_id: ${id}`)
+    )
+  }
+
+  for (const entry of counts) {
+    const item = byId.get(entry.component_id)
+    if (!item) continue
+    const status = toDbStatus(evaluateComponent(item.expectedQty, entry.actual_qty))
+    await tx
+      .update(verificationItems)
+      .set({ actualQty: entry.actual_qty, status })
+      .where(eq(verificationItems.id, item.id))
+    item.actualQty = entry.actual_qty
+    item.status = status
+  }
+
+  return items
+}
+
 export async function saveCounts(db: Db, orderId: string, input: SaveCountsInput) {
   return db.transaction(async (tx) => {
     const order = await lockOrder(tx, orderId)
     assertPending(order)
 
-    const items = await loadItems(tx, orderId)
-    const byId = new Map(items.map((item) => [item.componentId, item]))
-
-    const unknownIds = input.counts
-      .filter((entry) => !byId.has(entry.component_id))
-      .map((entry) => entry.component_id)
-    if (unknownIds.length > 0) {
-      throw new ValidationError(
-        'Some component ids do not belong to this order',
-        unknownIds.map((id) => `component_id: ${id}`)
-      )
-    }
-
-    for (const entry of input.counts) {
-      const item = byId.get(entry.component_id)
-      if (!item) continue
-      const status = toDbStatus(evaluateComponent(item.expectedQty, entry.actual_qty))
-      await tx
-        .update(verificationItems)
-        .set({ actualQty: entry.actual_qty, status })
-        .where(eq(verificationItems.id, item.id))
-      item.actualQty = entry.actual_qty
-      item.status = status
-    }
+    const items = await applyCounts(tx, orderId, input.counts)
 
     return { items: items.map(toItemState) }
   })
@@ -144,6 +154,10 @@ export async function approveOrder(
   return db.transaction(async (tx) => {
     const order = await lockOrder(tx, orderId)
     assertTransition(order.status, 'VERIFIED')
+
+    if (input.counts && input.counts.length > 0) {
+      await applyCounts(tx, orderId, input.counts)
+    }
 
     const items = await loadItems(tx, orderId)
     if (!canApprove(items)) {
@@ -203,6 +217,10 @@ export async function rejectOrder(
   return db.transaction(async (tx) => {
     const order = await lockOrder(tx, orderId)
     assertTransition(order.status, 'REJECTED')
+
+    if (input.counts && input.counts.length > 0) {
+      await applyCounts(tx, orderId, input.counts)
+    }
 
     const items = await loadItems(tx, orderId)
     const wastagePct = computeWastagePct(
