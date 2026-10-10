@@ -17,7 +17,13 @@ export async function GET() {
   } catch (error) {
     console.error('Health check failed:', error)
     return NextResponse.json(
-      { status: 'error', message: 'Database connection failed' },
+      {
+        error: {
+          code: 'DATABASE_UNAVAILABLE',
+          message: 'Database connection failed',
+          details: [],
+        },
+      },
       { status: 503 }
     )
   }

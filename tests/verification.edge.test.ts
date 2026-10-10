@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
-import { cuttingOrders, verificationItems, verificationLogs } from '@/db/schema'
+import {
+  cuttingOrders,
+  recipeComponents,
+  recipes,
+  verificationItems,
+  verificationLogs,
+} from '@/db/schema'
 import {
   approveOrderSchema,
   rejectOrderSchema,
@@ -79,19 +85,18 @@ describe('edge cases (integration)', () => {
   })
 
   it('records the correct wastage percentage on approval', async () => {
-    const withWastage = await createTestSet()
     // expected 90 yds, used 92.5 yds → (92.5 - 90) / 90 * 100 = 2.78
-    const order = await createOrderFixture(withWastage.db, {
-      createdBy: withWastage.actors.supervisor.id,
+    const order = await createOrderFixture(set.db, {
+      createdBy: set.actors.supervisor.id,
       expectedFabricYds: 90,
       actualFabricYds: 92.5,
     })
 
-    await saveCounts(withWastage.db, order.orderId, { counts: greenCounts(order) })
-    const result = await approveOrder(withWastage.db, withWastage.actors.verifier, order.orderId, {})
+    await saveCounts(set.db, order.orderId, { counts: greenCounts(order) })
+    const result = await approveOrder(set.db, set.actors.verifier, order.orderId, {})
     expect(result.wastagePct).toBe(2.78)
 
-    const log = await readApprovalLog(withWastage.db, order.orderId)
+    const log = await readApprovalLog(set.db, order.orderId)
     expect(log?.wastagePct).toBe('2.78')
   })
 
@@ -209,5 +214,65 @@ describe('database triggers', () => {
       .from(verificationItems)
       .where(eq(verificationItems.componentId, redComponentId))
     expect(redItem?.status).toBe('RED')
+  })
+
+  it('blocks verification items whose component belongs to another recipe', async () => {
+    const otherRecipeId = '88888888-8888-4888-8888-888888888888'
+    const otherComponentId = '99999999-9999-4999-8999-999999999999'
+    await set.db.insert(recipes).values({
+      id: otherRecipeId,
+      recipeCode: 'OTHER-RECIPE',
+      name: 'Other Recipe',
+      category: 'Other',
+      stdFabricYards: '1.00',
+      wastageCap: '5.00',
+    })
+    await set.db.insert(recipeComponents).values({
+      id: otherComponentId,
+      recipeId: otherRecipeId,
+      componentName: 'Other Component',
+      piecesPerGarment: 1,
+    })
+
+    await expectRejectedWithTriggerError(
+      set.db.insert(verificationItems).values({
+        orderId: set.order.orderId,
+        componentId: otherComponentId,
+        expectedQty: 1,
+        actualQty: null,
+        status: null,
+      }),
+      /verification_items component does not belong to the order recipe/
+    )
+  })
+
+  it('blocks whitespace rejection notes and non-positive attempt numbers', async () => {
+    await expectRejectedWithTriggerError(
+      set.db.insert(verificationLogs).values({
+        orderId: set.order.orderId,
+        verifierId: set.actors.verifier.id,
+        decision: 'REJECTED',
+        rejectionNote: '   ',
+        approvalNote: null,
+        wastagePct: '0.00',
+        varianceSnapshot: {},
+        attemptNo: 1,
+      }),
+      /vl_rejection_note_check/
+    )
+
+    await expectRejectedWithTriggerError(
+      set.db.insert(verificationLogs).values({
+        orderId: set.order.orderId,
+        verifierId: set.actors.verifier.id,
+        decision: 'REJECTED',
+        rejectionNote: 'Valid rejection note.',
+        approvalNote: null,
+        wastagePct: '0.00',
+        varianceSnapshot: {},
+        attemptNo: 0,
+      }),
+      /vl_attempt_no_check/
+    )
   })
 })

@@ -11,7 +11,7 @@ if (!connectionString) {
 // Disable prefetch/prepare for "Transaction" pool mode on serverless
 const client = postgres(connectionString, {
   prepare: false,
-  max: 5,
+  max: process.env.NODE_ENV === 'development' ? 5 : 1,
   connect_timeout: 10,
   idle_timeout: 30,
   max_lifetime: 300,
