@@ -217,6 +217,18 @@ There is **no percentage tolerance** on components — GREEN/YELLOW/RED is exact
 
 `wastage_pct = round2((actual_fabric_yds − expected_fabric_yds) / expected_fabric_yds × 100)`, computed against the `expected_fabric_yds` snapshot taken at order creation and stored on the approval log.
 
+### Verification audit workflow
+
+The verifier terminal separates **Save counts** from the final decision so the database remains the audit source of truth:
+
+1. The verifier enters or clears component counts and selects **Save counts**.
+2. The server validates every submitted component, computes its status, and persists the count snapshot. A cleared field is stored as `NULL` (UNCOUNTED).
+3. **Approve** and **Reject** become available only after a successful save. Their requests do not contain counts; the server re-reads the persisted rows inside the decision transaction.
+4. Approval is allowed only when every persisted component is GREEN or YELLOW. RED or UNCOUNTED components return `422` and remain pending.
+5. Rejection requires a 5–500 character reason and records the saved count snapshot, including incomplete counts, in the immutable verification log.
+
+This prevents unsaved browser values from becoming audit data and lets a verifier deliberately save an incomplete count set before rejecting a batch.
+
 ---
 
 ## API reference
