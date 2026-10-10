@@ -4,6 +4,7 @@ import {
   computeExpectedPieces,
   createOrderSchema,
   round2,
+  summarizeOrders,
 } from '@/domain/orders'
 
 const blouseComponents = [
@@ -108,5 +109,26 @@ describe('createOrderSchema', () => {
     expect(result).not.toHaveProperty('expected_qty')
     expect(result).not.toHaveProperty('status')
     expect(result).not.toHaveProperty('role')
+  })
+})
+
+describe('summarizeOrders', () => {
+  it('returns zeros for an empty list', () => {
+    expect(summarizeOrders([])).toEqual({ total: 0, pending: 0, verified: 0, rejected: 0 })
+  })
+
+  it('tallies mixed statuses', () => {
+    const orders = [
+      { status: 'PENDING_VERIFICATION' },
+      { status: 'VERIFIED' },
+      { status: 'VERIFIED' },
+      { status: 'REJECTED' },
+    ] as const
+    expect(summarizeOrders(orders)).toEqual({ total: 4, pending: 1, verified: 2, rejected: 1 })
+  })
+
+  it('handles a single status', () => {
+    const orders = [{ status: 'VERIFIED' }, { status: 'VERIFIED' }] as const
+    expect(summarizeOrders(orders)).toEqual({ total: 2, pending: 0, verified: 2, rejected: 0 })
   })
 })

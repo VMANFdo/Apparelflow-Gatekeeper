@@ -35,7 +35,15 @@ function formatDate(value: Date | string): string {
   return date.toISOString().slice(0, 10)
 }
 
-export function OrdersTable({ orders }: { orders: OrderListItem[] }) {
+export function OrdersTable({
+  orders,
+  emptyTitle = 'No cutting orders yet',
+  emptyHint = 'Use “Create order” to open the first cutting order from a recipe.',
+}: {
+  orders: OrderListItem[]
+  emptyTitle?: string
+  emptyHint?: string
+}) {
   const router = useRouter()
   const toast = useToast()
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -80,10 +88,8 @@ export function OrdersTable({ orders }: { orders: OrderListItem[] }) {
     return (
       <div className="mt-8 rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
         <ClipboardList className="mx-auto h-8 w-8 text-slate-400" aria-hidden="true" />
-        <p className="mt-3 text-sm font-medium text-slate-900">No cutting orders yet</p>
-        <p className="mt-1 text-sm text-slate-600">
-          Use “Create order” to open the first cutting order from a recipe.
-        </p>
+        <p className="mt-3 text-sm font-medium text-slate-900">{emptyTitle}</p>
+        <p className="mt-1 text-sm text-slate-600">{emptyHint}</p>
       </div>
     )
   }
