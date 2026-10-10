@@ -375,7 +375,7 @@ git branch -d feat/database-schema
 
 ## Phase 2: Tests, contrast audit and documentation (about 4h)
 
-- [ ] **T30: Test harness and the 5 required tests**
+- [x] **T30: Test harness and the 5 required tests**
   🌿 **Branch:** `test/core-test-suite`
   ```text
   Follow SKILLS.md skill 11. Set up Vitest with PGlite: tests/helpers/testDb.ts creates an in-memory DB and applies ALL migrations
@@ -386,7 +386,7 @@ git branch -d feat/database-schema
   ```
   ✅ `npm test` is green with no env vars set. | Commit: `test: add core domain and security tests`
 
-- [ ] **T31: Extra edge-case tests**
+- [x] **T31: Extra edge-case tests**
   🌿 **Branch:** `test/core-test-suite`
   ```text
   Add tests: uncounted (NULL) items block approval with 422; approving twice returns 409; yellow (excess) order can be approved;

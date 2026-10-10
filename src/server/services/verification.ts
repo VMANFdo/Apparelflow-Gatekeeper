@@ -1,6 +1,12 @@
 import { asc, count, desc, eq, inArray } from 'drizzle-orm'
 import { cuttingOrders, verificationItems, verificationLogs, type OrderStatus } from '@/db/schema'
-import { BusinessRuleError, ConflictError, NotFoundError, ValidationError } from '@/domain/errors'
+import {
+  BusinessRuleError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '@/domain/errors'
 import { computeWastagePct } from '@/domain/wastage'
 import { assertTransition } from '@/domain/stateMachine'
 import {
@@ -145,12 +151,19 @@ export function blockingDetails(items: VerificationItemRow[]): string[] {
   })
 }
 
+export function assertVerifier(actor: SessionUser): void {
+  if (actor.role !== 'cutting_verifier') {
+    throw new ForbiddenError('Only cutting verifiers can approve or reject orders')
+  }
+}
+
 export async function approveOrder(
   db: Db,
   actor: SessionUser,
   orderId: string,
   input: ApproveOrderInput
 ) {
+  assertVerifier(actor)
   return db.transaction(async (tx) => {
     const order = await lockOrder(tx, orderId)
     assertTransition(order.status, 'VERIFIED')
@@ -214,6 +227,7 @@ export async function rejectOrder(
   orderId: string,
   input: RejectOrderInput
 ) {
+  assertVerifier(actor)
   return db.transaction(async (tx) => {
     const order = await lockOrder(tx, orderId)
     assertTransition(order.status, 'REJECTED')
