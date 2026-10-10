@@ -27,25 +27,32 @@ body {
 }
 
 /* Explicit high-contrast base styles for inputs */
-input, select, textarea {
-  background-color: #ffffff;
-  color: #0f172a;
-  border: 1px solid #cbd5e1;
-}
+@layer base {
+  input, select, textarea {
+    background-color: #ffffff;
+    color: #0f172a;
+    border: 1px solid #64748b; /* WCAG AA 1.4.11 (4.76:1) against white */
+  }
 
-input::placeholder, select::placeholder, textarea::placeholder {
-  color: #64748b; /* WCAG AA contrast against white */
-}
+  input::placeholder, select::placeholder, textarea::placeholder {
+    color: #64748b; /* WCAG AA contrast against white */
+  }
 
-input:focus-visible, select:focus-visible, textarea:focus-visible {
-  outline: 2px solid #0f172a;
-  outline-offset: 1px;
-}
+  input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid #0f172a;
+    outline-offset: 1px;
+  }
 
-input:disabled, select:disabled, textarea:disabled {
-  background-color: #f1f5f9;
-  color: #64748b;
-  cursor: not-allowed;
+  input:disabled, select:disabled, textarea:disabled {
+    background-color: #f1f5f9;
+    color: #475569; /* WCAG AA contrast against #f1f5f9 */
+    cursor: not-allowed;
+  }
+
+  option {
+    background-color: #ffffff;
+    color: #0f172a;
+  }
 }
 
 /* Fix browser autofill styling to respect contrast */
@@ -55,10 +62,4 @@ input:-webkit-autofill:focus,
 input:-webkit-autofill:active{
     -webkit-box-shadow: 0 0 0 30px white inset !important;
     -webkit-text-fill-color: #0f172a !important;
-}
-
-/* Explicit dropdown option styles */
-option {
-  background-color: #ffffff;
-  color: #0f172a;
 }
