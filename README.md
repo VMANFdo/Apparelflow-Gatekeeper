@@ -5,6 +5,7 @@ A production **batch verification gate** for a garment factory. Cutting orders m
 Built as a **modular monolith**: one Next.js deploy, thin API route handlers, pure shared business rules in `domain/`, and a Supabase Postgres database that enforces the lifecycle at the schema level (triggers, checks, row-level security).
 
 **Live URL:** https://apparelflow-gatekeeper-lovat.vercel.app
+
 **Repository:** https://github.com/VMANFdo/Apparelflow-Gatekeeper
 
 ---
