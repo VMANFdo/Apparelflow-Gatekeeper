@@ -1,5 +1,5 @@
 import { CreateOrderDialog } from '@/components/orders/create-order-dialog'
-import { OrdersTable } from '@/components/orders/orders-table'
+import { SupervisorDashboard } from '@/components/orders/supervisor-dashboard'
 import { requireRolePage } from '@/server/auth/page-guard'
 import { db } from '@/server/db'
 import { listOrders, listRecipes } from '@/server/services/orders'
@@ -20,7 +20,7 @@ export default async function SupervisorOrdersPage() {
         <CreateOrderDialog recipes={recipes} />
       </div>
 
-      <OrdersTable orders={orders} />
+      <SupervisorDashboard orders={orders} />
     </div>
   )
 }

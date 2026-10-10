@@ -13,6 +13,23 @@ export const ORDER_STATUS_BADGE_CLASSES: Record<OrderStatus, string> = {
   VERIFIED: 'border-emerald-300 bg-emerald-100 text-emerald-900',
 }
 
+export interface OrderSummary {
+  total: number
+  pending: number
+  verified: number
+  rejected: number
+}
+
+export function summarizeOrders(orders: readonly { status: OrderStatus }[]): OrderSummary {
+  const summary: OrderSummary = { total: orders.length, pending: 0, verified: 0, rejected: 0 }
+  for (const order of orders) {
+    if (order.status === 'PENDING_VERIFICATION') summary.pending += 1
+    else if (order.status === 'VERIFIED') summary.verified += 1
+    else if (order.status === 'REJECTED') summary.rejected += 1
+  }
+  return summary
+}
+
 export function round2(value: number): number {
   return Math.round(value * 100) / 100
 }
