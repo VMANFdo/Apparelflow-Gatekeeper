@@ -396,7 +396,7 @@ git branch -d feat/database-schema
   ✅ Commit: `test: add edge-case and trigger tests`
   🔀 **Last task on this branch:** push, open PR "`test: add core and edge-case test suite`", self-review the diff, merge (merge commit, not squash), delete branch.
 
-- [ ] **T32: Contrast and usability audit**
+- [x] **T32: Contrast and usability audit**
   🌿 **Branch:** `fix/ui-contrast-audit`
   Manually click **every** input, select, dropdown option, textarea, disabled state, focus state and browser-autofilled field in light mode. Run Lighthouse Accessibility and axe DevTools. Test at 375px width. Fix every issue. 📝
 

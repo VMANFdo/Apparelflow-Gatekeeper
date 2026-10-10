@@ -35,7 +35,7 @@ function SectionHeading({
 function EmptySection({ title, message }: { title: string; message: string }) {
   return (
     <div className="mt-3 rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-      <History className="mx-auto h-6 w-6 text-slate-400" aria-hidden="true" />
+      <History className="mx-auto h-6 w-6 text-slate-500" aria-hidden="true" />
       <p className="mt-2 text-sm font-medium text-slate-900">{title}</p>
       <p className="mt-1 text-sm text-slate-600">{message}</p>
     </div>
@@ -55,7 +55,7 @@ function VerifiedSection({ orders }: { orders: VerifiedHistoryItem[] }) {
         <EmptySection title="No verified orders yet" message="Approved orders will be listed here." />
       ) : (
         <>
-          <div className="mt-3 hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:block">
+          <div className="mt-3 hidden overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm md:block">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
                 <tr>
@@ -148,7 +148,7 @@ function RejectedSection({ orders }: { orders: RejectedHistoryItem[] }) {
         <EmptySection title="No rejected orders yet" message="Rejected orders will be listed here." />
       ) : (
         <>
-          <div className="mt-3 hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:block">
+          <div className="mt-3 hidden overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm md:block">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
                 <tr>

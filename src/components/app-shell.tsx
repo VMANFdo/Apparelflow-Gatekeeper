@@ -45,7 +45,7 @@ function SidebarContent({
           type="button"
           onClick={onClose}
           aria-label="Close menu"
-          className="ml-auto rounded-md p-1.5 text-slate-700 hover:bg-slate-100 md:hidden"
+          className="ml-auto rounded-md p-1.5 text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 md:hidden"
         >
           <X className="h-5 w-5" aria-hidden="true" />
         </button>
@@ -125,12 +125,17 @@ export function AppShell({ user, pendingCount = 0, children }: AppShellProps) {
       </aside>
 
       {sidebarOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation menu"
+          className="fixed inset-0 z-40 md:hidden"
+        >
           <button
             type="button"
             aria-label="Close menu"
             onClick={() => setSidebarOpen(false)}
-            className="absolute inset-0 bg-slate-900/40"
+            className="absolute inset-0 bg-slate-900/40 focus-visible:bg-slate-900/60"
           />
           <aside className="absolute inset-y-0 left-0 w-64 bg-white shadow-lg">
             <SidebarContent
@@ -150,23 +155,23 @@ export function AppShell({ user, pendingCount = 0, children }: AppShellProps) {
             onClick={() => setSidebarOpen(true)}
             aria-label="Open menu"
             aria-expanded={sidebarOpen}
-            className="rounded-md p-1.5 text-slate-700 hover:bg-slate-100 md:hidden"
+            className="rounded-md p-1.5 text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 md:hidden"
           >
             <Menu className="h-5 w-5" aria-hidden="true" />
           </button>
 
-          <div className="text-left">
-            <div className="rounded-md border border-blue-700 bg-blue-600 px-2.5 py-1 text-sm font-medium text-white">
+          <div className="min-w-0 flex-1 text-left">
+            <div className="inline-block max-w-full truncate rounded-md border border-blue-700 bg-blue-700 px-2.5 py-1 text-sm font-medium text-white">
               Welcome Back {ROLE_LABELS[user.role]}!
             </div>
           </div>
 
-          <div className="ml-auto flex items-center gap-4">
+          <div className="ml-auto flex shrink-0 items-center gap-4">
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 hover:border-amber-600 hover:bg-gradient-to-r hover:from-yellow-300 hover:to-amber-400 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-500 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 hover:border-amber-700 hover:bg-gradient-to-r hover:from-yellow-300 hover:to-amber-400 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
                 >
                   Switch role
                   <ChevronDown className="h-4 w-4" aria-hidden="true" />
@@ -182,7 +187,7 @@ export function AppShell({ user, pendingCount = 0, children }: AppShellProps) {
                   </DropdownMenu.Label>
                   <DropdownMenu.Item
                     onSelect={() => void signOut()}
-                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-900 outline-none data-[highlighted]:bg-slate-100"
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-900 outline-none data-[highlighted]:bg-slate-200 data-[highlighted]:outline-2 data-[highlighted]:outline-inset data-[highlighted]:outline-slate-900"
                   >
                     <LogOut className="h-4 w-4" aria-hidden="true" />
                     Switch role
@@ -195,7 +200,7 @@ export function AppShell({ user, pendingCount = 0, children }: AppShellProps) {
               type="button"
               onClick={() => void signOut()}
               aria-label="Log out"
-              className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 hover:border-red-700 hover:bg-gradient-to-r hover:from-red-600 hover:to-rose-500 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-500 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 hover:border-red-700 hover:bg-red-700 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
             >
               <LogOut className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">Log out</span>

@@ -193,7 +193,7 @@ export function VerificationTerminal({ context }: { context: VerificationContext
       )}
 
       {/* Desktop: table */}
-      <div className="mt-4 hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:block">
+      <div className="mt-4 hidden overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm md:block">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
@@ -215,20 +215,21 @@ export function VerificationTerminal({ context }: { context: VerificationContext
                   <td className="px-4 py-3 text-slate-700">{item.expected_qty}</td>
                   <td className="px-4 py-3">
                     <input
-                      id={`count-${item.component_id}`}
+                      id={`count-${item.component_id}-desktop`}
                       inputMode="numeric"
                       autoComplete="off"
                       value={row?.raw ?? ''}
                       onChange={(e) => handleChange(item.component_id, e)}
                       onKeyDown={blockKeys}
+                      aria-label={`Actual count for ${item.component_name}`}
                       aria-invalid={error ? true : undefined}
-                      aria-describedby={error ? `count-${item.component_id}-error` : undefined}
+                      aria-describedby={error ? `count-${item.component_id}-desktop-error` : undefined}
                       placeholder="—"
                       className="w-28"
                     />
                     {error && (
                       <p
-                        id={`count-${item.component_id}-error`}
+                        id={`count-${item.component_id}-desktop-error`}
                         role="alert"
                         className="mt-1 text-xs text-red-700"
                       >
@@ -316,7 +317,7 @@ export function VerificationTerminal({ context }: { context: VerificationContext
                 ? 'Enter at least one count to enable this button'
                 : undefined
           }
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:bg-slate-400"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:bg-slate-500"
         >
           {saving ? (
             <>

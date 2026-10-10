@@ -46,7 +46,7 @@ export function SewingQueueCards({ orders }: { orders: SewingQueueItem[] }) {
   if (orders.length === 0) {
     return (
       <div className="mt-8 rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-        <Shirt className="mx-auto h-8 w-8 text-slate-400" aria-hidden="true" />
+        <Shirt className="mx-auto h-8 w-8 text-slate-500" aria-hidden="true" />
         <p className="mt-3 text-sm font-medium text-slate-900">No verified batches</p>
         <p className="mt-1 text-sm text-slate-600">
           Approved cutting orders will appear here once a verifier approves them.
@@ -58,7 +58,7 @@ export function SewingQueueCards({ orders }: { orders: SewingQueueItem[] }) {
   return (
     <>
       {/* Desktop: table */}
-      <div className="mt-8 hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:block">
+      <div className="mt-8 hidden overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm md:block">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
             <tr>

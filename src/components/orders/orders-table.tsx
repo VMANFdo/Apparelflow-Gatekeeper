@@ -72,7 +72,7 @@ export function OrdersTable({
         type="button"
         disabled={busyId === order.id}
         onClick={() => void resubmit(order)}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:text-slate-400"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-500 bg-white px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:text-slate-500"
       >
         {busyId === order.id ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -87,7 +87,7 @@ export function OrdersTable({
   if (orders.length === 0) {
     return (
       <div className="mt-8 rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-        <ClipboardList className="mx-auto h-8 w-8 text-slate-400" aria-hidden="true" />
+        <ClipboardList className="mx-auto h-8 w-8 text-slate-500" aria-hidden="true" />
         <p className="mt-3 text-sm font-medium text-slate-900">{emptyTitle}</p>
         <p className="mt-1 text-sm text-slate-600">{emptyHint}</p>
       </div>
@@ -97,7 +97,7 @@ export function OrdersTable({
   return (
     <>
       {/* Desktop: table */}
-      <div className="mt-8 hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:block">
+      <div className="mt-8 hidden overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm md:block">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
@@ -133,7 +133,7 @@ export function OrdersTable({
                       {resubmitButton(order)}
                     </div>
                   ) : (
-                    <span className="text-xs text-slate-400">—</span>
+                    <span className="text-xs text-slate-500">—</span>
                   )}
                 </td>
               </tr>

@@ -137,7 +137,7 @@ export function SewingDetailView({ detail }: { detail: SewingQueueDetailItem }) 
         <h2 className="text-sm font-semibold text-slate-900">Component piece counts</h2>
 
         {/* Desktop: table */}
-        <div className="mt-3 hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:block">
+        <div className="mt-3 hidden overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm md:block">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
               <tr>
@@ -199,7 +199,7 @@ export function SewingDetailView({ detail }: { detail: SewingQueueDetailItem }) 
             <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
             Sewing assembly started
             {detail.sewingStartedByName && (
-              <span className="ml-1 text-emerald-600">by {detail.sewingStartedByName}</span>
+              <span className="ml-1 text-emerald-800">by {detail.sewingStartedByName}</span>
             )}
           </div>
         ) : (
@@ -208,7 +208,7 @@ export function SewingDetailView({ detail }: { detail: SewingQueueDetailItem }) 
             type="button"
             onClick={() => void handleStart()}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="inline-flex items-center gap-2 rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-800 disabled:cursor-not-allowed disabled:bg-slate-500"
           >
             {loading ? (
               <>
