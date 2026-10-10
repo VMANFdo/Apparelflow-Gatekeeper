@@ -2,6 +2,7 @@ import { alias } from 'drizzle-orm/pg-core'
 import { and, asc, eq } from 'drizzle-orm'
 import { cuttingOrders, recipes, users, verificationLogs } from '@/db/schema'
 import { ConflictError, NotFoundError } from '@/domain/errors'
+import { isUuid } from '@/domain/validation'
 import type { SessionUser } from '@/server/auth/session'
 import type { Db } from '@/server/db'
 
@@ -116,6 +117,8 @@ export async function getVerifiedOrderDetail(
   db: Db,
   orderId: string
 ): Promise<SewingQueueDetailItem> {
+  if (!isUuid(orderId)) throw new NotFoundError('Order not found or not verified')
+
   const order = await db.query.cuttingOrders.findFirst({
     where: and(eq(cuttingOrders.id, orderId), eq(cuttingOrders.status, 'VERIFIED')),
     columns: {

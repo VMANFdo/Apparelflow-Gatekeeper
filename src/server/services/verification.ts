@@ -9,6 +9,7 @@ import {
 } from '@/domain/errors'
 import { computeWastagePct } from '@/domain/wastage'
 import { assertTransition } from '@/domain/stateMachine'
+import { isUuid } from '@/domain/validation'
 import {
   buildVarianceSnapshot,
   canApprove,
@@ -438,6 +439,8 @@ export async function getVerificationContext(
   db: Db,
   orderId: string
 ): Promise<VerificationContext | null> {
+  if (!isUuid(orderId)) return null
+
   const order = await db.query.cuttingOrders.findFirst({
     where: eq(cuttingOrders.id, orderId),
     columns: {
