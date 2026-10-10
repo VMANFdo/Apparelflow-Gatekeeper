@@ -412,7 +412,7 @@ git branch -d feat/database-schema
   ```
   ✅ A stranger could run the project from the README. | Commit: `docs: add readme`
 
-- [ ] **T34: AI optimization report**
+- [x] **T34: AI optimization report**
   🌿 **Branch:** `docs/readme-and-ai-report`
   Convert `docs/ai-log.md` into `AI_OPTIMIZATION_REPORT.md` in the repo root, with exactly these 4 sections: **1. Tools & Prompting**, **2. Flawed / Broken AI Code** (at least 2 real, specific examples), **3. Human Refactoring**, **4. Defensive Architecture** (state machine, guards, triggers, transactions). Be honest and specific, with file names and what you changed.
 
