@@ -1,52 +1,95 @@
 # AI Optimization Report — ApparelFlow ERP
 
-Live record of how the AI assistant was used, where it failed, what a human had to refactor, and the defensive architecture that keeps both safe. Kept beside the code so every future session can learn from the same traps.
+Live record of how the AI assistant was used, where it failed, what I had to refactor, and the defensive architecture that keeps both safe. Kept beside the code so every future session can learn from the same traps.
 
 ---
 
 ## 1. Tools & Prompting
 
-- **Tool:** Antigravity IDE (Google DeepMind).
-- **Strategy:** Full `SKILLS.md` provided as context before each task; task prompts taken verbatim from `TASKS.md`. Branch, commit-message and verification conventions from the same files.
-- **Prompt workflow:** plan first (confirm before touching code), implement, then verify (`npm test`, `npx tsc --noEmit`, `npm run lint`) before committing. Docs changes get the same treatment.
+The build used three kinds of AI: planning assistants for scoping, a no-code builder for the prototype, and coding assistants for the implementation itself.
+
+### Planning — Claude.ai
+
+- Used to simplify the original spec into a buildable scope (requirements analysis of the assessment PDF), produce the 4-day implementation plan (`System Implementation Plan.md`) and author the reusable skill set (`SKILLS.md`, mirrored as `CLAUDE.md` and `AGENTS.md`). I reviewed and changed the AI-generated plan myself — for example, I rejected order delete/edit on audit-trail grounds and kept different sort orders per role.
+
+### Prototyping — Lovable
+
+- Used to stand up a basic interactive prototype of the system, validating the screens and flow before any real code was written.
+
+### AI coding tools — Antigravity, GitHub Copilot, opencode
+
+- **Antigravity IDE (Google DeepMind)** — primary coding assistant; full `SKILLS.md` provided as context and task prompts fed verbatim from `TASKS.md`.
+- **GitHub Copilot** — in-editor completions and quick suggestions during hands-on coding.
+- **opencode** — terminal-based multi-agent CLI that drove the branch-by-branch implementation (plan, code, test, commit) from the same `TASKS.md` prompts, including this report.
+- All three share the conventions: commit messages match the repo style, every change is verified before it lands, and anything caught is logged here.
+
+### Prompting workflow (shared)
+
+- **Prompt discipline:** plan first (confirm before touching code), then implement, then verify (`npm test`, `npx tsc --noEmit`, `npm run lint`) before committing. Docs changes get the same treatment.
 - **What worked:**
   - Providing the full schema spec upfront produced accurate Drizzle table definitions on the first attempt.
   - Keeping the domain rules pure (`src/domain/*`, `src/server/services/*`) lets the same code compile into both client and server — the UI preview and the server hard stop can never drift.
   - PGlite-based integration tests replay the real schema and DB triggers (`tests/helpers/testDb.ts`), so trigger-level guarantees are tested without a live Postgres.
-- **Traps discovered:**
-  - This repo tracks a Next.js major with breaking changes vs. training data — always read the shipped docs in `node_modules/next/dist/docs/` before changing framework code.
-  - Turbopack needs a dev-server restart after adding new server exports; stale runtime otherwise.
-  - Visual quality (WCAG contrast, layout, accessibility) is the AI's weak spot: every pass that mattered was driven by a human audit (see §3).
+
+### Example prompts
+
+- **T23 approve endpoint** — from `TASKS.md`: "Follow SKILLS.md skill 7 exactly. POST /api/verification/:orderId/approve (verifier only), optional approval_note."
+- **Verification gatekeeper rule** — from `SKILLS.md` §7: "Compute each item's status on the server. Never accept a status or expected value from the client."
 
 ---
 
 ## 2. Flawed / Broken AI Code
 
-_Add a row here each time you catch an AI mistake. Be specific: file name, what was wrong, how you fixed it._
+#### Flawed AI code #1: wrong relative import path breaks the production build
 
-| # | File | What AI did wrong | How it was fixed |
-|---|---|---|---|
-| 1 | `src/server/auth/session.ts` | Assumed the `@/*` tsconfig alias covered the repo-root `db/` folder and wrote `import { users } from '@/db/schema'` — resolution failed (`Cannot find module '@/db/schema'`) in `npm test`. | Added a dedicated `"@/db/*": ["./db/*"]` path in `tsconfig.json` and a matching `/^@\/db\//` alias in `vitest.config.ts`, so the whole team can import the schema by alias instead of fragile relative paths. |
-| 2 | `tests/session.test.ts` | Passed `{ alg: 'HS384' }` as the second argument to jose's `SignJWT.sign()` — `SignOptions` has no `alg` field, so `tsc --noEmit` failed. | Set the algorithm in the protected header only (`.setProtectedHeader({ alg: 'HS384' })`) and let jose derive the signing algorithm from it. |
-| 3 | `src/components/app-shell.tsx` | Defined `SidebarContent` as a function *inside* the `AppShell` component body and rendered it twice — every render created a new component type, remounting the sidebar and losing its state; failed ESLint `react-hooks/static-components`. | Extracted `SidebarContent` to a module-level component taking `role`, `pathname` and `onClose` as props, so React reuses the same component identity across renders. |
-| 4 | `src/domain/auth.ts` | `loginSchema` was written without `.strict()`, deviating from SKILLS skill 9 — a body containing a tampered `role` field would be silently stripped (still safe, because the role is read from the DB, but the tampering attempt would return 200 instead of an explicit 400). | Added `.strict()` so unknown keys fail validation with 400 + `unrecognized_keys` details, plus `tests/login-schema.test.ts` covering the tampered-role case. |
+**Where:** `src/app/page.tsx` (task T08, branch `feat/app-skeleton-security-headers`)
+
+**What the AI generated:**
+
+```tsx
+import { recipes, recipeComponents } from '../../../db/schema'
+```
+
+**What went wrong:** The file lives at `src/app/page.tsx`, so `../../../` climbs one level above the repository root and points to a folder that doesn't exist. The AI miscounted the directory depth while mixing an alias import (`@/server/db`) with a relative one in the same file. The import was not validated by a production build before it was pushed.
+
+**How it was caught:** The first Vercel deployment failed with `Module not found: Can't resolve '../../../db/schema'`. The dev server alone didn't expose it.
+
+**Fix:** I corrected the import to use the tsconfig alias `@/db/*` (`"@/db/*": ["./db/*"]`), so imports no longer depend on counting `../` segments. I also added `export const dynamic = 'force-dynamic'` to the page so it isn't prerendered at build time against the database.
+
+#### Flawed AI code #2: inconsistent and non-deterministic queue ordering
+
+**Where:** `src/server/services/orders.ts`, `verification.ts` and `sewing.ts` (supervisor list, verifier queue, sewing queue)
+
+**What the AI generated:** Three queue queries sorted only by `createdAt`, with no tiebreaker. The sewing queue also displayed the *verified* date but sorted by the order’s *created* date.
+
+**What went wrong:**
+
+- **Mismatch in the sewing queue.** A batch verified just now could appear below older-created batches, so the queue didn’t reflect how long each batch had actually been waiting for sewing.
+- **Non-deterministic order.** Sorting by one timestamp column alone means rows with identical timestamps can swap places between requests.
+
+**How it was caught:** I asked an AI reviewer (Copilot) to compare the three dashboard queries. It traced the ordering through the services and UI components, and confirmed the UI does no re-sorting of its own.
+
+**Human decision:** After Copilot reported the differences, I first considered sorting all three views by order ID ascending for consistency, but rejected it because the roles use their lists differently (supervisor newest first; verifier and sewing oldest first, FIFO). Sorting by the random UUID `id` would not be chronological, so `orderNo` is used only as a tiebreaker.
+
+**Fix:**
+
+- Added `orderNo` (sequence-based, unique) as a tiebreaker to all three queries.
+- Changed the sewing queue to sort by the APPROVED verification log’s `created_at` (time verified), keeping the hard-coded `WHERE status = 'VERIFIED'`.
+- Added “Newest first” / “Oldest first” labels in the UI so the difference reads as intentional.
 
 ---
 
 ## 3. Human Refactoring
 
-_Changes made to AI output to improve correctness, security, or clarity — beyond fixing the bugs listed above._
-
-- **Contrast / accessibility / responsive audit pass (T32).** The AI-generated UI used decorative, low-contrast styling that passed no automated check: input borders `#cbd5e1` (≈1.6:1, failing WCAG 1.4.11), `disabled:bg-slate-400`, a `blue-600` badge, a red→rose hover gradient, and unlabelled desktop count inputs sharing one `id` per component with the mobile inputs. A human ran Lighthouse + axe + a 375 px emulation and drove the fix list: `border-slate-500` via `@layer base`, dark disabled states, `blue-700` badge, solid `red-700` logout, `-700` active states in `src/components/orders/order-stats.tsx`, `focus-visible` rings on the hamburger/close/scrim controls, `role="dialog" aria-modal="true"` on the drawer, `aria-label` + deduplicated `-desktop` input ids in `src/components/verification/verification-terminal.tsx`, header badge truncation, `inset-x-4` toasts, and `overflow-x-auto` wrappers on all six data tables. Shipped as `38f1dc2` on `fix/ui-contrast-audit`.
-- **Docs scope decisions (T33).** The AI's outline would have produced a bare walkthrough. Per user direction the scope expanded: a "Why a modular monolith (not ESB / microservices / event-driven)" rationale (§1 of the plan and the README), the supervisor summary/filter cards and verifier history tables promoted to headline features, and `public/system-architecture.png` embedded in both `README.md` and `System Implementation Plan.md`.
-- **Test-harness rework.** The first AI approach (drizzle's PGlite `migrate()` with raw SQL strings) collapsed when PGlite rejected `0001_triggers_rls.sql` as a single multi-statement prepared statement. Fix: read the `.sql` files from `db/migrations/` and execute them verbatim via `client.exec()` (`tests/helpers/testDb.ts:32-45`), with numeric columns injected as strings to match how Postgres reports them.
-- **Home/landing page direction.** The hero and layout were specified by the user (brand image / background treatment, overlay, copy tone); the AI implemented rather than invented the visual direction.
+- **Home page added** — the initial plan had no home page, so I added a brand hero with background image, overlay and copy tone specified by me rather than invented by the AI.
+- **Supervisor summary cards** — a clickable card strip (Total / Pending / Verified / Rejected) with live counts that doubles as the table filter.
+- **Verifier history tables** — Verified (order, verifier, wastage %) and Rejected (attempt, reason) history sections on the verifier queue, read from the immutable `verification_logs` audit trail.
+- **Contrast & accessibility pass (T32)** — the AI UI failed WCAG: low-contrast `border-slate-300` inputs, too-light disabled states, and duplicated/unlabelled count inputs. My audit (Lighthouse + axe + 375 px) drove the fixes: `border-slate-500`, dark disabled styles, `blue-700` badge, labelled `-desktop` count inputs, `overflow-x-auto` tables. Shipped as `38f1dc2`.
+- **Docs scope (T33)** — the AI's outline was a bare walkthrough; I added the modular-monolith-vs-ESB rationale and `system-architecture.png` to the README and plan.
 
 ---
 
 ## 4. Defensive Architecture
-
-_Intentional design decisions that defend against both bugs and AI mistakes — the state machine, guards, triggers, and transactions._
 
 - **Status transitions** enforced at DB level by `trg_valid_status_transition` — even a compromised server cannot write an illegal status.
 - **`verification_logs` immutability** enforced by `trg_immutable_verification_logs` — audit trail cannot be altered.
@@ -61,6 +104,6 @@ _Intentional design decisions that defend against both bugs and AI mistakes — 
 - **Login hardening** — one generic `Invalid email or password` for every failure, a dummy bcrypt compare when the email does not exist (no timing oracle), and a DB-persisted 5-failure / 15-minute lockout (no in-memory rate-limit state, which would not survive serverless cold starts).
 - **Strict request schemas** — `loginSchema` uses Zod `.strict()`: unknown body fields (e.g. a tampered `role`) return 400 instead of being ignored, and authorization still reads the role from the DB row, never from the request or the JWT claim alone.
 - **No per-IP rate limiting (accepted gap)** — the spec only requires the per-account lockout; per-IP counters would have to live in the DB on serverless (in-memory state dies with the instance), so brute force is mitigated by the account lockout plus the generic error and bcrypt's constant work factor.
-- **Order creation computes everything server-side** — `expected_qty`, `expected_fabric_yds`, `order_no` (from `order_no_seq`) and `created_by` are derived inside one transaction from the DB recipe and the session actor; a forged `expected_qty` in the body is stripped by `createOrderSchema` (user-approved: TASKS T18 says "confirm it is ignored", SKILLS skill 6 allows "strip and ignore"; `loginSchema` stays `.strict()` per skill 9).
+- **Order creation computes everything server-side** — `expected_qty`, `expected_fabric_yds`, `order_no` (from `order_no_seq`) and `created_by` are derived inside one transaction from the DB recipe and the session actor; a forged `expected_qty` in the body is stripped by `createOrderSchema` (I approved this: TASKS T18 says "confirm it is ignored", SKILLS skill 6 allows "strip and ignore"; `loginSchema` stays `.strict()` per skill 9).
 - **Error handler sanitizes exports** — unexpected errors map to one generic 500 that never leaks stack traces or SQL internals to the client (`src/server/http/handler.ts`).
 - **CSP tradeoff** — `script-src` keeps `'unsafe-inline'` because Next.js injects an inline bootstrap script; `frame-ancestors 'none'`, `nosniff` and strict Referrer-Policy still apply, and no third-party script origins are allow-listed.
