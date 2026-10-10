@@ -94,7 +94,8 @@ export const countEntrySchema = z.object({
     .number({ message: 'actual_qty must be a number' })
     .int('actual_qty must be an integer')
     .min(0, 'actual_qty must be at least 0')
-    .max(1000000, 'actual_qty must be at most 1000000'),
+    .max(1000000, 'actual_qty must be at most 1000000')
+    .nullable(),
 })
 
 function countsSchema(min: number) {

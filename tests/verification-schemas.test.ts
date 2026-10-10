@@ -37,6 +37,13 @@ describe('saveCountsSchema', () => {
     expect(parsed.counts[0]?.actual_qty).toBe(0)
   })
 
+  it('accepts null to clear a previously saved count', () => {
+    const parsed = saveCountsSchema.parse({
+      counts: [{ component_id: componentId, actual_qty: null }],
+    })
+    expect(parsed.counts[0]?.actual_qty).toBeNull()
+  })
+
   it('rejects a negative count', () => {
     expect(() =>
       saveCountsSchema.parse({ counts: [{ component_id: componentId, actual_qty: -1 }] })

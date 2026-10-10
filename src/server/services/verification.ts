@@ -91,7 +91,7 @@ export function assertPending(order: { status: OrderStatus }): void {
 export async function applyCounts(
   tx: Tx,
   orderId: string,
-  counts: { component_id: string; actual_qty: number }[]
+  counts: { component_id: string; actual_qty: number | null }[]
 ): Promise<VerificationItemRow[]> {
   const items = await loadItems(tx, orderId)
   const byId = new Map(items.map((item) => [item.componentId, item]))

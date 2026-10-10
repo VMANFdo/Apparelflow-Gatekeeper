@@ -65,6 +65,12 @@ export function SewingDetailView({ detail }: { detail: SewingQueueDetailItem }) 
       const res = await fetch(`/api/sewing/${detail.id}/start`, { method: 'POST' })
       const body = await res.json().catch(() => null)
       if (!res.ok) {
+        if (res.status === 409) {
+          setStarted(true)
+          toast('Sewing assembly was already started by another user.', 'error')
+          router.refresh()
+          return
+        }
         toast(body?.error?.message ?? 'Could not start sewing', 'error')
         return
       }
