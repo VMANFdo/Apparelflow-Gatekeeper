@@ -15,6 +15,7 @@ The build used three kinds of AI: planning assistants for scoping, a no-code bui
 ### Prototyping — Lovable
 
 - Used to stand up a basic interactive prototype of the system, validating the screens and flow before any real code was written.
+- Prototype: [apparelflowerp.lovable.app](https://apparelflowerp.lovable.app)
 
 ### AI coding tools — Antigravity, GitHub Copilot, opencode
 
