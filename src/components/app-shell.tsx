@@ -105,12 +105,15 @@ export function AppShell({ user, pendingCount = 0, children }: AppShellProps) {
   async function signOut() {
     try {
       const response = await fetch('/api/auth/logout', { method: 'POST' })
-      if (response.ok) toast('Signed out successfully', 'success')
+      if (!response.ok) {
+        toast('Could not sign out. Please try again.', 'error')
+        return
+      }
+      toast('Signed out successfully', 'success')
+      router.push('/login')
     } catch {
-      // still continue to the login page; the cookie is httpOnly and short-lived
+      toast('Could not reach the server. Please try again.', 'error')
     }
-    router.push('/login')
-    router.refresh()
   }
 
   return (

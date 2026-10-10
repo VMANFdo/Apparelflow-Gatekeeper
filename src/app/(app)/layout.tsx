@@ -5,6 +5,9 @@ import { db } from '@/server/db'
 import { countPendingOrders } from '@/server/services/verification'
 import { AppShell } from '@/components/app-shell'
 
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await getCurrentUser()
   if (!user) redirect('/login')
