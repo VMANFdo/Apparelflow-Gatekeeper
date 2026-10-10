@@ -168,10 +168,6 @@ export async function approveOrder(
     const order = await lockOrder(tx, orderId)
     assertTransition(order.status, 'VERIFIED')
 
-    if (input.counts && input.counts.length > 0) {
-      await applyCounts(tx, orderId, input.counts)
-    }
-
     const items = await loadItems(tx, orderId)
     if (!canApprove(items)) {
       throw new BusinessRuleError(
@@ -231,10 +227,6 @@ export async function rejectOrder(
   return db.transaction(async (tx) => {
     const order = await lockOrder(tx, orderId)
     assertTransition(order.status, 'REJECTED')
-
-    if (input.counts && input.counts.length > 0) {
-      await applyCounts(tx, orderId, input.counts)
-    }
 
     const items = await loadItems(tx, orderId)
     const wastagePct = computeWastagePct(

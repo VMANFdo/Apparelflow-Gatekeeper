@@ -10,17 +10,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/toast'
-import { rejectOrderSchema, type CountEntry } from '@/domain/verification'
+import { rejectOrderSchema } from '@/domain/verification'
 
 type RejectDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   orderId: string
-  counts: CountEntry[]
   onRejected: () => void
 }
 
-export function RejectDialog({ open, onOpenChange, orderId, counts, onRejected }: RejectDialogProps) {
+export function RejectDialog({ open, onOpenChange, orderId, onRejected }: RejectDialogProps) {
   const toast = useToast()
   const [reason, setReason] = useState('')
   const [attempted, setAttempted] = useState(false)
@@ -51,7 +50,7 @@ export function RejectDialog({ open, onOpenChange, orderId, counts, onRejected }
       const res = await fetch(`/api/verification/${orderId}/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ note: trimmed, counts }),
+        body: JSON.stringify({ note: trimmed }),
       })
       const body = await res.json().catch(() => null)
 
@@ -59,7 +58,6 @@ export function RejectDialog({ open, onOpenChange, orderId, counts, onRejected }
         const message = body?.error?.message ?? 'Could not reject the order'
         setServerError(message)
         toast(message, 'error')
-        if (res.status === 409) onRejected()
         return
       }
 

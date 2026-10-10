@@ -3,7 +3,7 @@ import { ZodError } from 'zod'
 import { BusinessRuleError, ForbiddenError } from '@/domain/errors'
 import { rejectOrderSchema } from '@/domain/verification'
 import { listVerifiedQueue } from '@/server/services/sewing'
-import { approveOrder, rejectOrder } from '@/server/services/verification'
+import { approveOrder, rejectOrder, saveCounts } from '@/server/services/verification'
 import {
   countLogs,
   createOrderFixture,
@@ -22,9 +22,8 @@ describe('approving an order (integration)', () => {
   })
 
   it('approves an all-GREEN order and records an APPROVED log', async () => {
-    const result = await approveOrder(set.db, set.actors.verifier, set.order.orderId, {
-      counts: greenCounts(set.order),
-    })
+    await saveCounts(set.db, set.order.orderId, { counts: greenCounts(set.order) })
+    const result = await approveOrder(set.db, set.actors.verifier, set.order.orderId, {})
 
     expect(result.order.status).toBe('VERIFIED')
     expect(await orderStatus(set.db, set.order.orderId)).toBe('VERIFIED')
@@ -51,12 +50,14 @@ describe('approving an order (integration)', () => {
           : set.order.expectedQtyByComponent[componentId],
     }))
 
-    await expect(
-      approveOrder(set.db, set.actors.verifier, set.order.orderId, { counts: redCounts })
-    ).rejects.toBeInstanceOf(BusinessRuleError)
-    await expect(
-      approveOrder(set.db, set.actors.verifier, set.order.orderId, { counts: redCounts })
-    ).rejects.toMatchObject({ status: 422, code: 'BUSINESS_RULE' })
+    await saveCounts(set.db, set.order.orderId, { counts: redCounts })
+    await expect(approveOrder(set.db, set.actors.verifier, set.order.orderId, {})).rejects.toBeInstanceOf(
+      BusinessRuleError
+    )
+    await expect(approveOrder(set.db, set.actors.verifier, set.order.orderId, {})).rejects.toMatchObject({
+      status: 422,
+      code: 'BUSINESS_RULE',
+    })
 
     expect(await orderStatus(set.db, set.order.orderId)).toBe('PENDING_VERIFICATION')
     expect(await countLogs(set.db, set.order.orderId)).toBe(0)
@@ -76,10 +77,10 @@ describe('approving an order (integration)', () => {
     const actor = set.actors[actorKey]
 
     await expect(
-      approveOrder(set.db, actor, set.order.orderId, { counts: greenCounts(set.order) })
+      approveOrder(set.db, actor, set.order.orderId, {})
     ).rejects.toBeInstanceOf(ForbiddenError)
     await expect(
-      approveOrder(set.db, actor, set.order.orderId, { counts: greenCounts(set.order) })
+      approveOrder(set.db, actor, set.order.orderId, {})
     ).rejects.toMatchObject({ status: 403, code: 'FORBIDDEN' })
 
     expect(await orderStatus(set.db, set.order.orderId)).toBe('PENDING_VERIFICATION')
@@ -104,9 +105,8 @@ describe('approving an order (integration)', () => {
     await rejectOrder(set.db, set.actors.verifier, rejected.orderId, {
       note: 'Roll damaged near the edge.',
     })
-    await approveOrder(set.db, set.actors.verifier, set.order.orderId, {
-      counts: greenCounts(set.order),
-    })
+    await saveCounts(set.db, set.order.orderId, { counts: greenCounts(set.order) })
+    await approveOrder(set.db, set.actors.verifier, set.order.orderId, {})
 
     const queue = await listVerifiedQueue(set.db)
     const queueOrderNos = queue.map((entry) => entry.orderNo)
