@@ -6,7 +6,7 @@ import {
   rejectOrderSchema,
   saveCountsSchema,
 } from '@/domain/verification'
-import { approveOrder } from '@/server/services/verification'
+import { approveOrder, saveCounts } from '@/server/services/verification'
 import {
   countLogs,
   createOrderFixture,
@@ -33,15 +33,13 @@ describe('edge cases (integration)', () => {
   })
 
   it('returns 409 when an already approved order is approved again', async () => {
-    await approveOrder(set.db, set.actors.verifier, set.order.orderId, {
-      counts: greenCounts(set.order),
-    })
+    await saveCounts(set.db, set.order.orderId, { counts: greenCounts(set.order) })
+    await approveOrder(set.db, set.actors.verifier, set.order.orderId, {})
 
-    await expect(
-      approveOrder(set.db, set.actors.verifier, set.order.orderId, {
-        counts: greenCounts(set.order),
-      })
-    ).rejects.toMatchObject({ status: 409, code: 'CONFLICT' })
+    await expect(approveOrder(set.db, set.actors.verifier, set.order.orderId, {})).rejects.toMatchObject({
+      status: 409,
+      code: 'CONFLICT',
+    })
   })
 
   it('approves an order with a YELLOW (excess) component', async () => {
@@ -53,9 +51,8 @@ describe('edge cases (integration)', () => {
           : set.order.expectedQtyByComponent[componentId],
     }))
 
-    const result = await approveOrder(set.db, set.actors.verifier, set.order.orderId, {
-      counts: yellowCounts,
-    })
+    await saveCounts(set.db, set.order.orderId, { counts: yellowCounts })
+    const result = await approveOrder(set.db, set.actors.verifier, set.order.orderId, {})
     expect(result.order.status).toBe('VERIFIED')
     expect(await orderStatus(set.db, set.order.orderId)).toBe('VERIFIED')
   })
@@ -69,9 +66,8 @@ describe('edge cases (integration)', () => {
       actualFabricYds: 92.5,
     })
 
-    const result = await approveOrder(withWastage.db, withWastage.actors.verifier, order.orderId, {
-      counts: greenCounts(order),
-    })
+    await saveCounts(withWastage.db, order.orderId, { counts: greenCounts(order) })
+    const result = await approveOrder(withWastage.db, withWastage.actors.verifier, order.orderId, {})
     expect(result.wastagePct).toBe(2.78)
 
     const log = await readApprovalLog(withWastage.db, order.orderId)
@@ -83,11 +79,7 @@ describe('edge cases (integration)', () => {
     expect(() =>
       saveCountsSchema.parse({ counts: [{ component_id: componentId, actual_qty: -1 }] })
     ).toThrow()
-    expect(() =>
-      approveOrderSchema.parse({
-        counts: [{ component_id: componentId, actual_qty: 2.5 }],
-      })
-    ).toThrow()
+    expect(() => approveOrderSchema.parse({ approval_note: 2.5 })).toThrow()
     expect(() => rejectOrderSchema.parse({ note: '   ' })).toThrow()
     expect(() => approveOrderSchema.parse({})).not.toThrow()
   })
@@ -119,9 +111,8 @@ describe('database triggers', () => {
   }
 
   it('blocks direct UPDATE on verification_logs after approval', async () => {
-    await approveOrder(set.db, set.actors.verifier, set.order.orderId, {
-      counts: greenCounts(set.order),
-    })
+    await saveCounts(set.db, set.order.orderId, { counts: greenCounts(set.order) })
+    await approveOrder(set.db, set.actors.verifier, set.order.orderId, {})
     const log = await readApprovalLog(set.db, set.order.orderId)
     expect(log).not.toBeNull()
 
@@ -135,9 +126,8 @@ describe('database triggers', () => {
   })
 
   it('blocks direct DELETE on verification_logs after approval', async () => {
-    await approveOrder(set.db, set.actors.verifier, set.order.orderId, {
-      counts: greenCounts(set.order),
-    })
+    await saveCounts(set.db, set.order.orderId, { counts: greenCounts(set.order) })
+    await approveOrder(set.db, set.actors.verifier, set.order.orderId, {})
     const log = await readApprovalLog(set.db, set.order.orderId)
     expect(log).not.toBeNull()
 
@@ -148,9 +138,8 @@ describe('database triggers', () => {
   })
 
   it('rejects an invalid status transition at the database level', async () => {
-    await approveOrder(set.db, set.actors.verifier, set.order.orderId, {
-      counts: greenCounts(set.order),
-    })
+    await saveCounts(set.db, set.order.orderId, { counts: greenCounts(set.order) })
+    await approveOrder(set.db, set.actors.verifier, set.order.orderId, {})
     expect(await orderStatus(set.db, set.order.orderId)).toBe('VERIFIED')
 
     await expectRejectedWithTriggerError(

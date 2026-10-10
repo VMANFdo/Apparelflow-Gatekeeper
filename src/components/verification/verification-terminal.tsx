@@ -65,6 +65,9 @@ export function VerificationTerminal({ context }: { context: VerificationContext
   const router = useRouter()
   const toast = useToast()
   const [rows, setRows] = useState<Record<string, RowState>>(() => initialRows(context.items))
+  const [countsSaved, setCountsSaved] = useState(() =>
+    context.items.some((item) => item.actual_qty !== null)
+  )
   const [saving, setSaving] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
 
@@ -123,6 +126,7 @@ export function VerificationTerminal({ context }: { context: VerificationContext
   function handleChange(componentId: string, event: ChangeEvent<HTMLInputElement>) {
     const raw = event.target.value
     setServerError(null)
+    setCountsSaved(false)
     setRows((prev) => {
       const { error } = parseCount(raw)
       return { ...prev, [componentId]: { raw, error } }
@@ -162,6 +166,7 @@ export function VerificationTerminal({ context }: { context: VerificationContext
         }
       }
       setRows(saved)
+      setCountsSaved(true)
       toast('Counts saved', 'success')
       router.refresh()
     } catch {
@@ -337,7 +342,7 @@ export function VerificationTerminal({ context }: { context: VerificationContext
         orderId={context.order.id}
         canApproveNow={canApproveNow}
         blockedSummary={blockedSummary}
-        counts={pendingCounts}
+        countsSaved={countsSaved}
       />
     </div>
   )
