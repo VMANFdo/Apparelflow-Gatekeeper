@@ -124,10 +124,6 @@ Splitting orders, verification and sewing into separate services sounds tempting
 - Approving an order must atomically: write the audit log (+ variance snapshot + wastage %), freeze the counts, and flip the status. Splitting this across services turns a single ACID transaction into distributed-transaction choreography.
 - Microservices add network failure modes, per-service auth, and duplicate rule sets. The cost is real; the bounded context we gain is… the three roles of one factory.
 
-### Message-driven / event-driven (e.g. Kafka)
-
-The lifecycle has **no asynchronous consumers**. Every step is a synchronous, human-initiated state change, and correctness is better guaranteed by a database trigger than by at-least-once event replay. Introducing a broker would add ordering, redelivery and schema-evolution problems where none need to exist.
-
 ### Why the modular monolith wins here
 
 - **One deploy, one source of truth** — the `domain/` rules compile into both the browser and the server, so the UI preview and the hard stop can never drift.
