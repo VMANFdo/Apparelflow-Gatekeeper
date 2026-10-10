@@ -20,6 +20,13 @@ Each day is about 7-8 hours, which fits the 28-32 hour budget. The days follow t
 
 **Design principle:** route handlers stay thin (parse, guard, call a service, map errors to HTTP). All business rules live in `src/server/services/*` and a shared pure `domain/` folder (state machine, traffic light, wastage). The tests target this layer.
 
+### Why a modular monolith (not ESB / microservices / event-driven)
+
+- **ESB** adds a central broker, adapters and message-translation layers. For a 3-role domain with six tables and no external integrations it is pure overhead: a single point of failure, an extra network hop and orchestration complexity with no real work to do.
+- **Microservices / SOA** would break the domain's atomicity. Approving an order must write the audit log (+ variance snapshot + wastage %), freeze the counts and flip the status in one ACID transaction (`SELECT … FOR UPDATE` + DB triggers). Splitting this across services forces distributed-transaction choreography and duplicate rule sets.
+- **Event-driven (Kafka etc.)** has no place here: the lifecycle has no asynchronous consumers — every step is a synchronous, human-initiated state change best enforced by a database trigger.
+- **Modular monolith** keeps one deployable and one source of truth: the pure `domain/` rules compile into both client and server (the UI preview and the server hard stop can never drift), PGlite tests replay the real schema and triggers, and the cleanly bounded modules (`domain/`, `server/services/`, `db/migrations/`) can be extracted later if the product ever outgrows a single process.
+
 ---
 
 ## 2. Database design
@@ -105,7 +112,7 @@ Additions beyond the minimum:
   - Yards is positive with at most 2 decimals.
   - The roll ID is trimmed and matches a regex.
 - Build the "Create Cutting Order" modal with a **live preview table** of expected pieces and fabric. Use `inputMode="numeric"`, block `e`, `-` and `.` in integer fields, and show inline errors.
-- Build the supervisor order list (status badges, filters).
+- Build the supervisor order list with a **summary card strip**: four clickable cards (Total / Pending / Verified / Rejected) that show live counts and act as the table filter. Clicking the active card clears the filter.
 - Add `POST /api/orders/:id/resubmit` for REJECTED orders, which resets counts and returns to PENDING_VERIFICATION.
 
 **Done when:** a Verifier session gets 403 from `POST /api/orders`, and a created order persists across refresh.
@@ -135,6 +142,7 @@ Additions beyond the minimum:
 - Real-time validation: the client imports the same `evaluateComponent` for instant feedback. This is only UX, since the server remains the authority.
 - The "Approve Batch" button is disabled while any component is RED or uncounted, with a message explaining why. Add a "Reject Batch" dialog with a required reason.
 - Yellow rows show "+N surplus". Add success/error toasts and a loading state on submit.
+- Add **verifier history** on the queue page, read from the immutable `verification_logs` audit trail: a *Verified* section (order, verifier, decision date, wastage %) and a *Rejected* section (attempt number and rejection reason).
 
 **Done when:** a cURL approve on a shortage order returns 422 with the button bypassed.
 
