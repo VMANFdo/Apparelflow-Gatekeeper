@@ -41,7 +41,7 @@ The build used three kinds of AI: planning assistants for scoping, a no-code bui
 
 ## 2. Flawed / Broken AI Code
 
-#### Flawed AI code #1: wrong relative import path breaks the production build
+### Flawed AI code #1: wrong relative import path breaks the production build
 
 **Where:** `src/app/page.tsx` (task T08, branch `feat/app-skeleton-security-headers`)
 
@@ -57,7 +57,7 @@ import { recipes, recipeComponents } from '../../../db/schema'
 
 **Fix:** I corrected the import to use the tsconfig alias `@/db/*` (`"@/db/*": ["./db/*"]`), so imports no longer depend on counting `../` segments. I also added `export const dynamic = 'force-dynamic'` to the page so it isn't prerendered at build time against the database.
 
-#### Flawed AI code #2: inconsistent and non-deterministic queue ordering
+### Flawed AI code #2: inconsistent and non-deterministic queue ordering
 
 **Where:** `src/server/services/orders.ts`, `verification.ts` and `sewing.ts` (supervisor list, verifier queue, sewing queue)
 
@@ -78,6 +78,28 @@ import { recipes, recipeComponents } from '../../../db/schema'
 - Changed the sewing queue to sort by the APPROVED verification log’s `created_at` (time verified), keeping the hard-coded `WHERE status = 'VERIFIED'`.
 - Added “Newest first” / “Oldest first” labels in the UI so the difference reads as intentional.
 
+### Flawed AI code #3: missing UUID validation
+
+**Where:** `src/app/(app)/verifier/[orderId]/page.tsx`, `src/app/(app)/sewing/[orderId]/page.tsx`
+
+**What the AI generated:** Route parameters were passed directly into database queries without validating that `orderId` was a valid UUID.
+
+**What went wrong:**
+
+- Visiting routes such as `/verifier/order` caused PostgreSQL UUID-casting errors.
+- The intended `notFound()` flow never ran because the database query failed first.
+- Users saw an error page instead of a clean 404 page.
+
+**How it was caught:** During manual testing, invalid URLs triggered a PostgreSQL `22P02` `invalid input syntax for type uuid` error instead of the expected 404 page.
+
+**Human decision:** I chose to validate UUID route parameters before querying the database rather than relying on database exceptions.
+
+**Fix:**
+
+- Added server-side UUID validation before database queries.
+- Treated invalid UUIDs as "not found".
+- Routed invalid order URLs to the custom 404 page instead of exposing database errors.
+
 ---
 
 ## 3. Human Refactoring
@@ -86,6 +108,7 @@ import { recipes, recipeComponents } from '../../../db/schema'
 - **Supervisor summary cards** — a clickable card strip (Total / Pending / Verified / Rejected) with live counts that doubles as the table filter.
 - **Verifier history tables** — Verified (order, verifier, wastage %) and Rejected (attempt, reason) history sections on the verifier queue, read from the immutable `verification_logs` audit trail.
 - **Contrast & accessibility pass (T32)** — the AI UI failed WCAG: low-contrast `border-slate-300` inputs, too-light disabled states, and duplicated/unlabelled count inputs. My audit (Lighthouse + axe + 375 px) drove the fixes: `border-slate-500`, dark disabled styles, `blue-700` badge, labelled `-desktop` count inputs, `overflow-x-auto` tables. Shipped as `38f1dc2`.
+- **Custom 404 & error pages** — replaced Next.js's unstyled defaults with styled, role-aware boundaries (`not-found.tsx`, `error.tsx`, `global-error.tsx`): a 404 card linking to the user's role home (or `/login`), and error cards whose "Try again" never exposes `error.message`, stack or digest.
 - **Docs scope (T33)** — the AI's outline was a bare walkthrough; I added the modular-monolith-vs-ESB rationale and `system-architecture.png` to the README and plan.
 
 ---
