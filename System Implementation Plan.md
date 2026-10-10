@@ -56,7 +56,7 @@ Additions beyond the minimum:
 ### Phase 1: Foundation and schema (about 4h)
 
 - Create the public GitHub repo and scaffold Next.js. Add `.env.example`, a strict `.gitignore`, ESLint and Prettier. Use conventional commits from the first commit (`feat:`, `chore:`, `test:`).
-- Start `docs/ai-log.md` now and add to it whenever AI gets something wrong. It becomes the final AI report on Day 4.
+- Start `AI_OPTIMIZATION_REPORT.md` now (repo root) and add to it whenever AI gets something wrong. It becomes the final AI report on Day 4.
 - Create the Drizzle schema and first migration, with enums, CHECK constraints and indexes.
 - Write a custom SQL migration for the triggers and RLS.
 

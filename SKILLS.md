@@ -49,7 +49,7 @@ src/
     http/handler.ts  (error-to-response wrapper)
 db/                  (schema.ts, migrations/, seed.ts)
 tests/               (helpers/testDb.ts and *.test.ts)
-docs/ai-log.md
+AI_OPTIMIZATION_REPORT.md
 ```
 
 **Rules:**
@@ -262,7 +262,7 @@ AI tools commonly make these mistakes in this kind of project. **Check each one 
 - [ ] Hard-coded secrets or `NEXT_PUBLIC_` on a secret
 - [ ] Tests that mock away the very rule they claim to test
 
-If you find an issue the user did not ask about, **fix it and add a one-line note** the user can paste into `docs/ai-log.md`.
+If you find an issue the user did not ask about, **fix it and add a one-line note** the user can paste into `AI_OPTIMIZATION_REPORT.md`.
 
 ---
 
@@ -273,7 +273,7 @@ If you find an issue the user did not ask about, **fix it and add a one-line not
 3. Security-relevant behaviour verified with a direct request (cURL/Postman), not just the UI.
 4. Tests added or updated, and `npm test` passes.
 5. Small, descriptive commit made.
-6. Any AI mistake caught is recorded in `docs/ai-log.md`.
+6. Any AI mistake caught is recorded in `AI_OPTIMIZATION_REPORT.md`.
 
 ---
 

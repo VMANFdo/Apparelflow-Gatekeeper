@@ -1,15 +1,22 @@
-# AI Usage Log — ApparelFlow ERP
+# AI Optimization Report — ApparelFlow ERP
 
-This file tracks all AI tool usage and mistakes caught during development.
-It will be converted to `AI_OPTIMIZATION_REPORT.md` on Day 4.
+Live record of how the AI assistant was used, where it failed, what a human had to refactor, and the defensive architecture that keeps both safe. Kept beside the code so every future session can learn from the same traps.
 
 ---
 
 ## 1. Tools & Prompting
 
-- **Tool:** Antigravity IDE (Google DeepMind)
-- **Strategy:** Full SKILLS.md provided as context before each task. Task prompts taken verbatim from TASKS.md.
-- **What worked:** Providing the full schema spec upfront produced accurate Drizzle table definitions on the first attempt.
+- **Tool:** Antigravity IDE (Google DeepMind).
+- **Strategy:** Full `SKILLS.md` provided as context before each task; task prompts taken verbatim from `TASKS.md`. Branch, commit-message and verification conventions from the same files.
+- **Prompt workflow:** plan first (confirm before touching code), implement, then verify (`npm test`, `npx tsc --noEmit`, `npm run lint`) before committing. Docs changes get the same treatment.
+- **What worked:**
+  - Providing the full schema spec upfront produced accurate Drizzle table definitions on the first attempt.
+  - Keeping the domain rules pure (`src/domain/*`, `src/server/services/*`) lets the same code compile into both client and server — the UI preview and the server hard stop can never drift.
+  - PGlite-based integration tests replay the real schema and DB triggers (`tests/helpers/testDb.ts`), so trigger-level guarantees are tested without a live Postgres.
+- **Traps discovered:**
+  - This repo tracks a Next.js major with breaking changes vs. training data — always read the shipped docs in `node_modules/next/dist/docs/` before changing framework code.
+  - Turbopack needs a dev-server restart after adding new server exports; stale runtime otherwise.
+  - Visual quality (WCAG contrast, layout, accessibility) is the AI's weak spot: every pass that mattered was driven by a human audit (see §3).
 
 ---
 
@@ -28,13 +35,18 @@ _Add a row here each time you catch an AI mistake. Be specific: file name, what 
 
 ## 3. Human Refactoring
 
-_Changes you made to AI output to improve correctness, security, or clarity._
+_Changes made to AI output to improve correctness, security, or clarity — beyond fixing the bugs listed above._
+
+- **Contrast / accessibility / responsive audit pass (T32).** The AI-generated UI used decorative, low-contrast styling that passed no automated check: input borders `#cbd5e1` (≈1.6:1, failing WCAG 1.4.11), `disabled:bg-slate-400`, a `blue-600` badge, a red→rose hover gradient, and unlabelled desktop count inputs sharing one `id` per component with the mobile inputs. A human ran Lighthouse + axe + a 375 px emulation and drove the fix list: `border-slate-500` via `@layer base`, dark disabled states, `blue-700` badge, solid `red-700` logout, `-700` active states in `src/components/orders/order-stats.tsx`, `focus-visible` rings on the hamburger/close/scrim controls, `role="dialog" aria-modal="true"` on the drawer, `aria-label` + deduplicated `-desktop` input ids in `src/components/verification/verification-terminal.tsx`, header badge truncation, `inset-x-4` toasts, and `overflow-x-auto` wrappers on all six data tables. Shipped as `38f1dc2` on `fix/ui-contrast-audit`.
+- **Docs scope decisions (T33).** The AI's outline would have produced a bare walkthrough. Per user direction the scope expanded: a "Why a modular monolith (not ESB / microservices / event-driven)" rationale (§1 of the plan and the README), the supervisor summary/filter cards and verifier history tables promoted to headline features, and `public/system-architecture.png` embedded in both `README.md` and `System Implementation Plan.md`.
+- **Test-harness rework.** The first AI approach (drizzle's PGlite `migrate()` with raw SQL strings) collapsed when PGlite rejected `0001_triggers_rls.sql` as a single multi-statement prepared statement. Fix: read the `.sql` files from `db/migrations/` and execute them verbatim via `client.exec()` (`tests/helpers/testDb.ts:32-45`), with numeric columns injected as strings to match how Postgres reports them.
+- **Home/landing page direction.** The hero and layout were specified by the user (brand image / background treatment, overlay, copy tone); the AI implemented rather than invented the visual direction.
 
 ---
 
 ## 4. Defensive Architecture
 
-_Intentional design decisions that defend against both bugs and AI mistakes._
+_Intentional design decisions that defend against both bugs and AI mistakes — the state machine, guards, triggers, and transactions._
 
 - **Status transitions** enforced at DB level by `trg_valid_status_transition` — even a compromised server cannot write an illegal status.
 - **`verification_logs` immutability** enforced by `trg_immutable_verification_logs` — audit trail cannot be altered.
@@ -50,4 +62,5 @@ _Intentional design decisions that defend against both bugs and AI mistakes._
 - **Strict request schemas** — `loginSchema` uses Zod `.strict()`: unknown body fields (e.g. a tampered `role`) return 400 instead of being ignored, and authorization still reads the role from the DB row, never from the request or the JWT claim alone.
 - **No per-IP rate limiting (accepted gap)** — the spec only requires the per-account lockout; per-IP counters would have to live in the DB on serverless (in-memory state dies with the instance), so brute force is mitigated by the account lockout plus the generic error and bcrypt's constant work factor.
 - **Order creation computes everything server-side** — `expected_qty`, `expected_fabric_yds`, `order_no` (from `order_no_seq`) and `created_by` are derived inside one transaction from the DB recipe and the session actor; a forged `expected_qty` in the body is stripped by `createOrderSchema` (user-approved: TASKS T18 says "confirm it is ignored", SKILLS skill 6 allows "strip and ignore"; `loginSchema` stays `.strict()` per skill 9).
+- **Error handler sanitizes exports** — unexpected errors map to one generic 500 that never leaks stack traces or SQL internals to the client (`src/server/http/handler.ts`).
 - **CSP tradeoff** — `script-src` keeps `'unsafe-inline'` because Next.js injects an inline bootstrap script; `frame-ancestors 'none'`, `nosniff` and strict Referrer-Policy still apply, and no third-party script origins are allow-listed.

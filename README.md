@@ -337,4 +337,4 @@ The seed also creates three demo orders: `DEMO-ROLL-A` (pending verification), `
 
 ## Roadmap
 
-Task tracking, including every commit and branch, lives in [`TASKS.md`](TASKS.md). The remaining work and known gaps are documented there; see also [`System Implementation Plan.md`](System%20Implementation%20Plan.md) for the original 4-day plan and [`docs/ai-log.md`](docs/ai-log.md) for the AI collaboration log.
+Task tracking, including every commit and branch, lives in [`TASKS.md`](TASKS.md). The remaining work and known gaps are documented there; see also [`System Implementation Plan.md`](System%20Implementation%20Plan.md) for the original 4-day plan and [`AI_OPTIMIZATION_REPORT.md`](AI_OPTIMIZATION_REPORT.md) for the AI collaboration log.

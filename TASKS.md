@@ -5,10 +5,10 @@
 1. Work **top to bottom**. Do not skip ahead. Each task builds on the previous one.
 2. Put `SKILLS.md` in your repo root (also copy it to `CLAUDE.md`, `AGENTS.md` or `.cursorrules`, depending on your AI tool) so the AI always follows the project rules.
 3. For each task: paste the **Prompt** into your AI tool, then review the output against the **Verify** line.
-4. **Do not accept AI output blindly.** If you catch a mistake, add a line to `docs/ai-log.md` (this becomes your `AI_OPTIMIZATION_REPORT.md`).
+4. **Do not accept AI output blindly.** If you catch a mistake, add a line to `AI_OPTIMIZATION_REPORT.md`.
 5. Work on the **branch shown under each task** (see "Branching workflow" below). Commit after every task using the suggested message, then tick the checkbox. When you finish the last task of a branch, open a PR and merge it before starting the next branch.
 
-Legend: 🧑 = manual step you must do yourself (not the AI) | ✅ = verification | 📝 = log to `docs/ai-log.md` | 🌿 = git branch | 🔀 = open PR and merge
+Legend: 🧑 = manual step you must do yourself (not the AI) | ✅ = verification | 📝 = log to `AI_OPTIMIZATION_REPORT.md` | 🌿 = git branch | 🔀 = open PR and merge
 
 ---
 
