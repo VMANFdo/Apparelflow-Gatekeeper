@@ -21,7 +21,7 @@ const INVALID_CREDENTIALS = 'Invalid email or password'
 export async function POST(request: NextRequest) {
   return handle(request, async () => {
     const input = loginSchema.parse(await request.json())
-    const email = input.email.toLowerCase()
+    const email = input.email.trim().toLowerCase()
 
     const user = await db.query.users.findFirst({ where: eq(users.email, email) })
     const now = Date.now()

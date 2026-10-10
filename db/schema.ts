@@ -43,7 +43,9 @@ export const users = pgTable('users', {
   failedAttempts: integer('failed_attempts').notNull().default(0),
   lockedUntil: timestamp('locked_until', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (t) => [
+  sql`CONSTRAINT users_email_lowercase_check CHECK (${t.email} = lower(${t.email}))`,
+])
 
 export const recipes = pgTable('recipes', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -136,8 +138,9 @@ export const verificationLogs = pgTable(
   },
   () => [
     sql`CONSTRAINT vl_rejection_note_check CHECK (
-      decision != 'REJECTED' OR (rejection_note IS NOT NULL AND rejection_note != '')
+      decision != 'REJECTED' OR (rejection_note IS NOT NULL AND btrim(rejection_note) <> '')
     )`,
+    sql`CONSTRAINT vl_attempt_no_check CHECK (attempt_no > 0)`,
   ]
 )
 
