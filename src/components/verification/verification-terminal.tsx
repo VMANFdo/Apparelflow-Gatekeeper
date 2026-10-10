@@ -89,8 +89,6 @@ export function VerificationTerminal({ context }: { context: VerificationContext
   }, [context.items, parsed])
 
   const hasErrors = context.items.some((item) => parsed[item.component_id]?.error !== null)
-  const allEmpty = context.items.every((item) => parsed[item.component_id]?.value === null)
-
   const localItems = context.items.map((item) => ({
     componentId: item.component_id,
     componentName: item.component_name,
@@ -100,9 +98,9 @@ export function VerificationTerminal({ context }: { context: VerificationContext
 
   const pendingCounts = useMemo<CountEntry[]>(
     () =>
-      context.items.flatMap((item) => {
+      context.items.map((item) => {
         const value = parsed[item.component_id]?.value ?? null
-        return value === null ? [] : [{ component_id: item.component_id, actual_qty: value }]
+        return { component_id: item.component_id, actual_qty: value }
       }),
     [context.items, parsed]
   )
@@ -138,7 +136,7 @@ export function VerificationTerminal({ context }: { context: VerificationContext
   }
 
   async function saveCounts() {
-    if (hasErrors || allEmpty || saving) return
+    if (hasErrors || saving) return
     setSaving(true)
     setServerError(null)
 
@@ -307,9 +305,7 @@ export function VerificationTerminal({ context }: { context: VerificationContext
         <p className="text-xs text-slate-500">
           {hasErrors
             ? 'Fix the highlighted fields before saving.'
-            : allEmpty
-              ? 'Enter at least one count to save.'
-              : 'Counts are also checked on the server.'}
+            : 'Counts are also checked on the server.'}
         </p>
         <button
           type="button"
@@ -318,9 +314,7 @@ export function VerificationTerminal({ context }: { context: VerificationContext
           title={
             hasErrors
               ? 'Fix the highlighted fields to enable this button'
-              : allEmpty
-                ? 'Enter at least one count to enable this button'
-                : undefined
+              : undefined
           }
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:bg-slate-500"
         >

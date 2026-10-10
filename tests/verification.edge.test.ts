@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
-import { cuttingOrders, verificationLogs } from '@/db/schema'
+import { cuttingOrders, verificationItems, verificationLogs } from '@/db/schema'
 import {
   approveOrderSchema,
   rejectOrderSchema,
@@ -55,6 +55,27 @@ describe('edge cases (integration)', () => {
     const result = await approveOrder(set.db, set.actors.verifier, set.order.orderId, {})
     expect(result.order.status).toBe('VERIFIED')
     expect(await orderStatus(set.db, set.order.orderId)).toBe('VERIFIED')
+  })
+
+  it('persists cleared counts as NULL and blocks approval', async () => {
+    await saveCounts(set.db, set.order.orderId, { counts: greenCounts(set.order) })
+    await saveCounts(set.db, set.order.orderId, {
+      counts: set.order.componentIds.map((component_id) => ({
+        component_id,
+        actual_qty: null,
+      })),
+    })
+
+    const items = await set.db
+      .select({ actualQty: verificationItems.actualQty, status: verificationItems.status })
+      .from(verificationItems)
+      .where(eq(verificationItems.orderId, set.order.orderId))
+    expect(items.every((item) => item.actualQty === null && item.status === null)).toBe(true)
+
+    await expect(approveOrder(set.db, set.actors.verifier, set.order.orderId, {})).rejects.toMatchObject({
+      status: 422,
+      code: 'BUSINESS_RULE',
+    })
   })
 
   it('records the correct wastage percentage on approval', async () => {
@@ -149,5 +170,44 @@ describe('database triggers', () => {
         .where(eq(cuttingOrders.id, set.order.orderId)),
       /Invalid status transition/
     )
+  })
+
+  it('blocks a direct VERIFIED update when any component is uncounted', async () => {
+    await expectRejectedWithTriggerError(
+      set.db
+        .update(cuttingOrders)
+        .set({ status: 'VERIFIED' })
+        .where(eq(cuttingOrders.id, set.order.orderId)),
+      /Order cannot be VERIFIED while components are uncounted or RED/
+    )
+    expect(await orderStatus(set.db, set.order.orderId)).toBe('PENDING_VERIFICATION')
+  })
+
+  it('blocks a direct VERIFIED update when any component is RED', async () => {
+    const redComponentId = set.order.componentIds[0]
+    await saveCounts(set.db, set.order.orderId, {
+      counts: set.order.componentIds.map((componentId) => ({
+        component_id: componentId,
+        actual_qty:
+          componentId === redComponentId
+            ? set.order.expectedQtyByComponent[componentId] - 1
+            : set.order.expectedQtyByComponent[componentId],
+      })),
+    })
+
+    await expectRejectedWithTriggerError(
+      set.db
+        .update(cuttingOrders)
+        .set({ status: 'VERIFIED' })
+        .where(eq(cuttingOrders.id, set.order.orderId)),
+      /Order cannot be VERIFIED while components are uncounted or RED/
+    )
+    expect(await orderStatus(set.db, set.order.orderId)).toBe('PENDING_VERIFICATION')
+
+    const [redItem] = await set.db
+      .select({ actualQty: verificationItems.actualQty, status: verificationItems.status })
+      .from(verificationItems)
+      .where(eq(verificationItems.componentId, redComponentId))
+    expect(redItem?.status).toBe('RED')
   })
 })

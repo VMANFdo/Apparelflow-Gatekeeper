@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
+import { NotFoundError } from '@/domain/errors'
 import { db } from '@/server/db'
 import { getVerifiedOrderDetail } from '@/server/services/sewing'
 import { SewingDetailView } from '@/components/sewing/detail-view'
@@ -15,8 +16,9 @@ export default async function SewingDetailPage({
   let detail
   try {
     detail = await getVerifiedOrderDetail(db, orderId)
-  } catch {
-    notFound()
+  } catch (error) {
+    if (error instanceof NotFoundError) notFound()
+    throw error
   }
 
   const { recipe } = detail
