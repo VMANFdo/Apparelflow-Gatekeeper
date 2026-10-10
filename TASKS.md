@@ -403,7 +403,7 @@ git branch -d feat/database-schema
   ✅ No white-on-white anywhere. Text/background contrast >= 4.5:1. | Commit: `fix(ui): resolve contrast and responsive issues`
   🔀 **Last task on this branch:** push, open PR "`fix(ui): resolve contrast and responsive issues`", self-review the diff, merge (merge commit, not squash), delete branch.
 
-- [ ] **T33: README**
+- [x] **T33: README**
   🌿 **Branch:** `docs/readme-and-ai-report`
   ```text
   Write README.md: project overview, architecture summary (modular monolith diagram in text), tech stack, schema documentation
