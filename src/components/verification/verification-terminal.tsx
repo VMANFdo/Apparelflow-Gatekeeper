@@ -310,7 +310,7 @@ export function VerificationTerminal({ context }: { context: VerificationContext
         <button
           type="button"
           onClick={() => void saveCounts()}
-          disabled={hasErrors || allEmpty || saving}
+          disabled={hasErrors || saving}
           title={
             hasErrors
               ? 'Fix the highlighted fields to enable this button'
